@@ -1,0 +1,661 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User specific settings and profile data.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "bannerURL": { "type": "string", "description": "URL for the profile banner image" },
+        "phoneNumber": { "type": "string" },
+        "mpesaPhoneNumber": { "type": "string", "description": "Default phone number for M-Pesa transactions" },
+        "familyRole": { "type": "string", "enum": ["Father", "Mother", "Guardian", "Son", "Daughter", "Relative", "Help"] },
+        "familyId": { "type": "string", "description": "ID of the family group this user belongs to" },
+        "familyStatus": { "type": "string", "enum": ["active", "suspended", "invited"], "description": "Membership status within the family" },
+        "isVerified": { "type": "boolean", "description": "Whether identity document is verified" },
+        "idDocumentUrl": { "type": "string" },
+        "age": { "type": "number" },
+        "address": { "type": "string" },
+        "dateOfBirth": { "type": "string", "format": "date" },
+        "currency": { "type": "string", "enum": ["KES", "USD", "EUR"] },
+        "relationships": { 
+          "type": "array", 
+          "items": { 
+             "type": "object", 
+             "properties": { 
+               "targetUserId": { "type": "string" }, 
+               "relationType": { "type": "string" } 
+             } 
+          } 
+        }
+      },
+      "required": ["uid", "email"]
+    },
+    "Family": {
+      "title": "Family Group",
+      "description": "A group of users sharing a household.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "ownerId": { "type": "string", "description": "The user who created the family group" },
+        "inviteCode": { "type": "string", "description": "Unique 6-character code to join this family" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "ownerId", "inviteCode"]
+    },
+    "Habit": {
+      "title": "Habit",
+      "description": "A habit to be tracked with optional milestone targets.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "frequency": { "type": "string", "enum": ["daily", "weekly"] },
+        "completedDates": { "type": "array", "items": { "type": "string" }, "description": "List of dates habit was completed" },
+        "reminderTime": { "type": "string", "description": "Time of day for reminder (HH:mm)" },
+        "remindersEnabled": { "type": "boolean" },
+        "targetValue": { "type": "number", "description": "Weekly or daily goal (e.g. 10 miles)" },
+        "currentValue": { "type": "number", "description": "Progress towards target" },
+        "unit": { "type": "string", "description": "Unit (miles, steps, pages)" },
+        "isMilestoneBased": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "name"]
+    },
+    "GrowthTask": {
+      "title": "Growth & Training Task",
+      "description": "Educational or developmental assignments for children or adults.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string", "enum": ["Hygiene", "Etiquette", "Discipline", "Language", "Math", "Science", "Music", "Art", "Bible Study", "Fitness", "Family Time"] },
+        "ageRange": { "type": "string", "enum": ["0-3", "4-7", "8-12", "13-17", "Adult"] },
+        "assignedToUserId": { "type": "string" },
+        "assignedByUserId": { "type": "string" },
+        "points": { "type": "number", "description": "XP reward for completion" },
+        "targetValue": { "type": "number", "default": 1 },
+        "currentValue": { "type": "number", "default": 0 },
+        "isCompleted": { "type": "boolean" },
+        "dueDate": { "type": "string", "format": "date-time" },
+        "familyId": { "type": "string" },
+        "milestones": { 
+          "type": "array", 
+          "items": { 
+            "type": "object", 
+            "properties": { 
+              "text": { "type": "string" }, 
+              "completed": { "type": "boolean" } 
+            } 
+          } 
+        }
+      }
+    },
+    "EducationContent": {
+      "title": "AI-Curated Educational Resource",
+      "description": "Learning material generated for a specific age and subject.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "category": { "type": "string" },
+        "ageRange": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string", "description": "Markdown content for the lesson" },
+        "familyId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Achievement": {
+      "title": "Achievement/Badge",
+      "description": "Rewards earned for completing growth milestones.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "icon": { "type": "string" },
+        "type": { "type": "string", "enum": ["Mastery", "Streak", "Discipline", "Academic"] },
+        "pointsValue": { "type": "number" },
+        "awardedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "ShoppingList": {
+      "title": "Shopping List",
+      "description": "A collaborative shopping list.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "items": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "bought": { "type": "boolean" }, "quantity": { "type": "string" }, "price": { "type": "number" }, "productId": { "type": "string" } } } },
+        "createdBy": { "type": "string" },
+        "familyId": { "type": "string" }
+      }
+    },
+    "Product": {
+      "title": "Product Catalog",
+      "description": "Standard products for price tracking and scanning.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "barcode": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "baselinePrice": { "type": "number", "description": "The 'standard' price for inflation calculation" },
+        "userId": { "type": "string" }
+      }
+    },
+    "PriceRecord": {
+      "title": "Price Record",
+      "description": "Historical price points for a product at a specific time.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productId": { "type": "string" },
+        "price": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string" },
+        "store": { "type": "string" }
+      }
+    },
+    "Chore": {
+      "title": "Chore/Task",
+      "description": "Cleaning or kids' task assignment.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "assignedTo": { "type": "string", "description": "Display name of the person assigned" },
+        "assignedToUserId": { "type": "string", "description": "User ID of the person assigned" },
+        "dueDate": { "type": "string", "format": "date-time" },
+        "dueTime": { "type": "string", "description": "Specific time of day for the task (HH:mm)" },
+        "remindersEnabled": { "type": "boolean" },
+        "checkList": { "type": "array", "items": { "type": "object", "properties": { "id": { "type": "string" }, "text": { "type": "string" }, "completed": { "type": "boolean" } } } },
+        "completed": { "type": "boolean" },
+        "category": { "type": "string", "enum": ["cleaning", "kids", "outside", "other"] },
+        "familyId": { "type": "string" }
+      }
+    },
+    "MealPlan": {
+      "title": "Meal Plan",
+      "description": "Weekly meal planning.",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string", "format": "date" },
+        "meals": { "type": "object", "properties": { "breakfast": { "type": "string" }, "lunch": { "type": "string" }, "dinner": { "type": "string" } } },
+        "familyId": { "type": "string" },
+        "suggestions": { 
+          "type": "array", 
+          "items": { 
+            "type": "object", 
+            "properties": { 
+              "user": { "type": "string" }, 
+              "text": { "type": "string" }, 
+              "image": { "type": "string" } 
+            } 
+          } 
+        }
+      }
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "Specialized expense tracking for bills, utilities, etc.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "amount": { "type": "number" },
+        "category": { "type": "string", "enum": ["rent", "school_fees", "utility", "medical", "insurance", "emergency", "misc", "transport", "project", "debt_repayment"] },
+        "date": { "type": "string", "format": "date-time" },
+        "description": { "type": "string" },
+        "userId": { "type": "string" },
+        "isPaid": { "type": "boolean" }
+      },
+      "required": ["amount", "category", "userId"]
+    },
+    "Income": {
+      "title": "Income",
+      "description": "Tracking sources of income and project earnings.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "amount": { "type": "number" },
+        "source": { "type": "string" },
+        "type": { "type": "string", "enum": ["salary", "project", "investment", "business", "other"] },
+        "frequency": { "type": "string", "enum": ["monthly", "one-time", "weekly"] },
+        "date": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string" }
+      },
+      "required": ["amount", "source", "userId"]
+    },
+    "SavingsGoal": {
+      "title": "Savings Goal",
+      "description": "Financial goals for savings (different from holidays).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "targetAmount": { "type": "number" },
+        "currentAmount": { "type": "number" },
+        "deadline": { "type": "string", "format": "date" },
+        "userId": { "type": "string" }
+      },
+      "required": ["name", "targetAmount", "userId"]
+    },
+    "Loan": {
+      "title": "Loan/Debt",
+      "description": "Tracking money lent or borrowed.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "amount": { "type": "number" },
+        "person": { "type": "string" },
+        "type": { "type": "string", "enum": ["borrowed", "lent"] },
+        "dueDate": { "type": "string", "format": "date-time" },
+        "isSettled": { "type": "boolean" },
+        "userId": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["amount", "person", "type", "userId"]
+    },
+    "Trip": {
+      "title": "Holiday Trip",
+      "description": "Planned holidays and itineraries.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "destination": { "type": "string" },
+        "startDate": { "type": "string", "format": "date" },
+        "endDate": { "type": "string", "format": "date" },
+        "packingList": { "type": "array", "items": { "type": "object", "properties": { "item": { "type": "string" }, "packed": { "type": "boolean" } } } },
+        "budget": { "type": "number" },
+        "userId": { "type": "string" },
+        "familyId": { "type": "string" }
+      }
+    },
+    "Wallet": {
+      "title": "User Wallet",
+      "description": "Personal wallet for spending and receiving money.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "balance": { "type": "number" },
+        "currency": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Transaction": {
+      "title": "Wallet Transaction",
+      "description": "Any movement of money in or out of a wallet.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fromUserId": { "type": "string" },
+        "toUserId": { "type": "string" },
+        "amount": { "type": "number" },
+        "type": { "type": "string", "enum": ["transfer", "payment", "deposit", "withdrawal", "reconciliation"] },
+        "status": { "type": "string", "enum": ["pending", "completed", "failed"] },
+        "provider": { "type": "string", "enum": ["m-pesa", "airtel-money", "internal", "bank"] },
+        "description": { "type": "string" },
+        "metadata": { "type": "object" },
+        "familyId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "BankAccount": {
+      "title": "Bank Account",
+      "description": "Manual tracking of bank balances for reconciliation.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "bankName": { "type": "string" },
+        "accountNumber": { "type": "string" },
+        "balance": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Message": {
+      "title": "Family Message",
+      "description": "Real-time communication within a family group.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "familyId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "text": { "type": "string" },
+        "mediaUrl": { "type": "string" },
+        "mediaType": { "type": "string", "enum": ["image", "video"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Recipe": {
+      "title": "Recipe",
+      "description": "A food recipe created by a user or AI.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "category": { "type": "string", "enum": ["Breakfast", "Lunch", "Dinner", "Snack", "Dessert"] },
+        "ingredients": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "quantity": { "type": "number" },
+              "unit": { "type": "string" }
+            }
+          }
+        },
+        "familyId": { "type": "string" },
+        "servings": { "type": "number", "default": 2 },
+        "image": { "type": "string", "description": "Base64 or URL of the recipe image" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "category", "ingredients", "familyId"]
+    },
+    "Receipt": {
+      "title": "Document Receipt",
+      "description": "Scanned receipts for financial records.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "extractedAmount": { "type": "number" },
+        "extractedDate": { "type": "string" },
+        "extractedMerchant": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "processed", "failed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Community": {
+      "title": "Community Network",
+      "description": "A group of households or individuals (Chama, Family Network, Neighbourhood).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["Chama / Table Banking", "Family Network", "Neighbourhood Association", "Welfare Group"] },
+        "creatorId": { "type": "string" },
+        "memberIds": { "type": "array", "items": { "type": "string" } },
+        "moderatorIds": { "type": "array", "items": { "type": "string" } },
+        "memberRoles": { "type": "object", "description": "Map of UID to role (admin, chairman, treasurer, secretary, member)" },
+        "poolBalance": { "type": "number" },
+        "modules": { "type": "array", "items": { "type": "string" } },
+        "invitationCode": { "type": "string" },
+        "privacy": { "type": "string", "enum": ["public", "private"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Report": {
+      "title": "System Report/Complaint",
+      "description": "A complaint about a community or user submitted to Overwatch.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "reporterId": { "type": "string" },
+        "targetId": { "type": "string" },
+        "subject": { "type": "string" },
+        "reason": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "reviewed", "actioned"] },
+        "adminResponse": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "SupportConversation": {
+      "title": "Official Support Channel",
+      "description": "Admin-initiated communication for support resolution.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "adminId": { "type": "string" },
+        "subject": { "type": "string" },
+        "relatedId": { "type": "string", "description": "ID of related ticket or report" },
+        "status": { "type": "string", "enum": ["active", "closed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Announcement": {
+      "title": "Community Announcement",
+      "description": "Updates or news posted by officials.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "type": { "type": "string", "enum": ["general", "urgent", "meeting"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Minutes": {
+      "title": "Meeting Minutes",
+      "description": "Records of community meetings.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "secretaryId": { "type": "string" },
+        "meetingDate": { "type": "string", "format": "date-time" },
+        "attendees": { "type": "array", "items": { "type": "string" } },
+        "notes": { "type": "string", "format": "markdown" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "MerryGoRound": {
+      "title": "Merry-Go-Round Schedule",
+      "description": "Rotating credit and savings payout sequence.",
+      "type": "object",
+      "properties": {
+        "sequence": { "type": "array", "items": { "type": "string" }, "description": "UIDs in order of payout" },
+        "currentIndex": { "type": "number" },
+        "payoutAmount": { "type": "number" },
+        "frequency": { "type": "string", "enum": ["weekly", "monthly"] },
+        "nextPayoutDate": { "type": "string", "format": "date-time" }
+      }
+    },
+    "ReportVerification": {
+      "title": "Report Verification Record",
+      "description": "A public-facing snapshot of a community report for formal institution verification.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "communityId": { "type": "string" },
+        "communityName": { "type": "string" },
+        "reportType": { "type": "string", "enum": ["financial", "members"] },
+        "data": { "type": "array", "items": { "type": "object" }, "description": "The frozen snapshot of the data" },
+        "accessCode": { "type": "string", "description": "6-digit unique code" },
+        "generatedBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "ForumThread": {
+      "title": "Forum Thread",
+      "description": "A topical discussion in the community hub.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "featuredImage": { "type": "string", "description": "URL or base64 of the featured image" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "category": { "type": "string" },
+        "communityId": { "type": "string" },
+        "communityName": { "type": "string" },
+        "views": { "type": "number" },
+        "replyCount": { "type": "number" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "ForumComment": {
+      "title": "Forum Comment",
+      "description": "A reply to a forum thread.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "threadId": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Alert or update for a specific user.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["message", "finance", "event", "warning", "system"] },
+        "communityId": { "type": "string" },
+        "communityName": { "type": "string" },
+        "isRead": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Global user settings"
+    },
+    "/communities/{commId}": {
+      "schema": "Community",
+      "description": "Community hub definitions"
+    },
+    "/communities/{commId}/announcements/{annId}": {
+      "schema": "Announcement",
+      "description": "Community updates"
+    },
+    "/communities/{commId}/minutes/{minId}": {
+      "schema": "Minutes",
+      "description": "Meeting records"
+    },
+    "/communities/{commId}/merryGoRound/config": {
+      "schema": "MerryGoRound",
+      "description": "Rotating payout sequence"
+    },
+    "/reports/{reportId}": {
+      "schema": "Report",
+      "description": "Access restricted to admins and reporter"
+    },
+    "/support_conversations/{convId}": {
+      "schema": "SupportConversation",
+      "description": "Admin-initiated support"
+    },
+    "/families/{familyId}": {
+      "schema": "Family",
+      "description": "Family group definitions"
+    },
+    "/habits/{habitId}": {
+      "schema": "Habit",
+      "description": "Individual habit tracking"
+    },
+    "/shoppingLists/{listId}": {
+      "schema": "ShoppingList",
+      "description": "Shopping lists"
+    },
+    "/products/{productId}": {
+        "schema": "Product",
+        "description": "Product catalog and baseline prices"
+    },
+    "/priceRecords/{recordId}": {
+        "schema": "PriceRecord",
+        "description": "Historical price tracking entries"
+    },
+    "/chores/{choreId}": {
+      "schema": "Chore",
+      "description": "Tasks and chores"
+    },
+    "/mealPlans/{planId}": {
+      "schema": "MealPlan",
+      "description": "Meal plans"
+    },
+    "/expenses/{expenseId}": {
+      "schema": "Expense",
+      "description": "Detailed expense entries"
+    },
+    "/incomes/{incomeId}": {
+      "schema": "Income",
+      "description": "Income sources"
+    },
+    "/savingsGoals/{goalId}": {
+        "schema": "SavingsGoal",
+        "description": "Financial savings goals"
+    },
+    "/loans/{loanId}": {
+        "schema": "Loan",
+        "description": "Lending and debts"
+    },
+    "/trips/{tripId}": {
+      "schema": "Trip",
+      "description": "Holiday and trip planning"
+    },
+    "/wallets/{walletId}": {
+      "schema": "Wallet",
+      "description": "User wallets"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Wallet transactions"
+    },
+    "/bankAccounts/{accountId}": {
+      "schema": "BankAccount",
+      "description": "Manual bank account tracking"
+    },
+    "/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Family chat messages"
+    },
+    "/recipes/{recipeId}": {
+      "schema": "Recipe",
+      "description": "User created and AI generated recipes"
+    },
+    "/receipts/{receiptId}": {
+      "schema": "Receipt",
+      "description": "Scanned document receipts"
+    },
+    "/growthTasks/{taskId}": {
+      "schema": "GrowthTask",
+      "description": "Growth and educational tasks"
+    },
+    "/educationContent/{contentId}": {
+      "schema": "EducationContent",
+      "description": "Curated educational resources"
+    },
+    "/achievements/{achievementId}": {
+      "schema": "Achievement",
+      "description": "Awarded badges and rewards"
+    },
+    "/reportVerifications/{verificationId}": {
+      "schema": "ReportVerification",
+      "description": "Publicly accessible records requiring a unique code."
+    },
+    "/forumThreads/{threadId}": {
+      "schema": "ForumThread",
+      "description": "Global discussion threads"
+    },
+    "/forumThreads/{threadId}/comments/{commentId}": {
+      "schema": "ForumComment",
+      "description": "Replies to discussions"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "User specific alerts"
+    }
+  }
+}

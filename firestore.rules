@@ -1,0 +1,487 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: userId (auth.uid)
+    // Fields: uid, email, displayName, photoURL, mpesaPhoneNumber, currency
+    //
+    // Collection: habits
+    // Fields: id, userId, name, frequency, completedDates, createdAt
+    //
+    // Collection: shoppingLists
+    // Fields: id, name, items (array of {name, bought, quantity, price, productId}), createdBy
+    //
+    // Collection: products
+    // Fields: id, barcode, name, category, baselinePrice, userId
+    //
+    // Collection: priceRecords
+    // Fields: id, productId, price, date, userId, store
+    //
+    // Collection: chores
+    // Fields: id, title, assignedTo, dueDate, completed, category
+    //
+    // Collection: mealPlans
+    // Fields: date, meals (map {breakfast, lunch, dinner})
+    //
+    // Collection: expenses
+    // Fields: id, amount, category, date, description, userId, isPaid
+    //
+    // Collection: incomes
+    // Fields: id, amount, source, type, frequency, date, userId
+    //
+    // Collection: savingsGoals
+    // Fields: id, name, targetAmount, currentAmount, deadline, userId
+    //
+    // Collection: loans
+    // Fields: id, amount, person, type, dueDate, isSettled, userId, description
+    //
+    // Collection: trips
+    // Fields: id, title, destination, startDate, endDate, packingList, budget, userId
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "cyrongau@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isFamilyMember(familyId) {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.familyId == familyId;
+    }
+
+    function isFamilyOwner(familyId) {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/families/$(familyId)).data.ownerId == request.auth.uid;
+    }
+
+    function isParent() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.familyRole in ["Father", "Mother", "Guardian"];
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email']) &&
+             data.uid is string &&
+             data.email is string &&
+             (!('mpesaPhoneNumber' in data) || data.mpesaPhoneNumber is string) &&
+             (!('phoneNumber' in data) || data.phoneNumber is string) &&
+             (!('photoURL' in data) || data.photoURL is string) &&
+             (!('bannerURL' in data) || data.bannerURL is string) &&
+             (!('familyRole' in data) || data.familyRole in ["Father", "Mother", "Guardian", "Son", "Daughter", "Relative", "Help"]) &&
+             (!('familyId' in data) || data.familyId is string) &&
+             (!('familyStatus' in data) || data.familyStatus in ["active", "suspended", "invited"]) &&
+             (!('isVerified' in data) || data.isVerified is bool) &&
+             (!('idDocumentUrl' in data) || data.idDocumentUrl is string) &&
+             (!('age' in data) || data.age is number) &&
+             (!('address' in data) || data.address is string) &&
+             (!('dateOfBirth' in data) || data.dateOfBirth is string) &&
+             (!('relationships' in data) || data.relationships is list) &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() < 100));
+    }
+
+    function isValidWallet(data) {
+      return data.keys().hasAll(['userId', 'balance', 'currency']) &&
+             data.userId is string &&
+             data.balance is number &&
+             data.currency is string;
+    }
+
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['fromUserId', 'toUserId', 'amount', 'type', 'status']) &&
+             data.fromUserId is string &&
+             data.toUserId is string &&
+             data.amount is number &&
+             data.type in ["transfer", "payment", "deposit", "withdrawal", "reconciliation"] &&
+             data.status in ["pending", "completed", "failed"] &&
+             (!('provider' in data) || data.provider in ["m-pesa", "airtel-money", "internal", "bank"]);
+    }
+
+    function isValidBankAccount(data) {
+      return data.keys().hasAll(['userId', 'bankName', 'balance']) &&
+             data.userId is string &&
+             data.bankName is string &&
+             data.balance is number;
+    }
+
+    function isValidMessage(data) {
+      return data.keys().hasAll(['familyId', 'senderId', 'text']) &&
+             data.familyId is string &&
+             data.senderId is string &&
+             data.text is string;
+    }
+
+    function isValidRecipe(data) {
+      return data.keys().hasAll(['title', 'category', 'ingredients', 'familyId']) &&
+             data.title is string && data.title.size() < 200 &&
+             data.category in ["Breakfast", "Lunch", "Dinner", "Snack", "Dessert"] &&
+             data.ingredients is list &&
+             data.familyId is string &&
+             (!('image' in data) || data.image is string);
+    }
+
+    function isValidReceipt(data) {
+      return data.keys().hasAll(['userId', 'imageUrl']) &&
+             data.userId is string &&
+             data.imageUrl is string;
+    }
+
+    function isValidFamily(data) {
+      return data.keys().hasAll(['name', 'ownerId', 'inviteCode']) &&
+             data.name is string && data.name.size() > 0 &&
+             data.ownerId is string &&
+             data.inviteCode is string && data.inviteCode.size() == 6;
+    }
+
+    function isValidHabit(data) {
+      return data.keys().hasAll(['userId', 'name']) &&
+             data.userId is string &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 200 &&
+             (!('targetValue' in data) || data.targetValue is number) &&
+             (!('currentValue' in data) || data.currentValue is number) &&
+             (!('isMilestoneBased' in data) || data.isMilestoneBased is bool);
+    }
+
+    function isValidGrowthTask(data) {
+      return data.keys().hasAll(['title', 'category', 'familyId']) &&
+             data.title is string && data.title.size() < 200 &&
+             data.category in ["Hygiene", "Etiquette", "Discipline", "Language", "Math", "Science", "Music", "Art", "Bible Study", "Fitness", "Family Time"] &&
+             data.familyId is string &&
+             (!('assignedToUserId' in data) || data.assignedToUserId is string) &&
+             (!('targetValue' in data) || data.targetValue is number) &&
+             (!('currentValue' in data) || data.currentValue is number);
+    }
+
+    function isValidEducationContent(data) {
+      return data.keys().hasAll(['title', 'category', 'content', 'familyId']) &&
+             data.title is string && data.category is string &&
+             data.content is string && data.familyId is string;
+    }
+
+    function isValidAchievement(data) {
+      return data.keys().hasAll(['userId', 'title', 'type']) &&
+             data.userId is string && data.title is string &&
+             data.type in ["Mastery", "Streak", "Discipline", "Academic"];
+    }
+
+    function isValidEvent(data) {
+      return data.keys().hasAll(['title', 'date', 'familyId', 'type']) &&
+             data.title is string && data.date is string &&
+             data.familyId is string &&
+             (!('venue' in data) || data.date is string) &&
+             (!('budget' in data) || data.budget is number) &&
+             (!('invitedGuests' in data) || data.invitedGuests is list) &&
+             (!('bannerURL' in data) || data.bannerURL is string);
+    }
+
+    function isValidShoppingList(data) {
+      return data.name is string && data.name.size() < 100 &&
+             data.items is list &&
+             (!('familyId' in data) || data.familyId is string);
+    }
+
+    function isValidChore(data) {
+      return data.title is string && data.title.size() < 200 &&
+             (!('assignedTo' in data) || data.assignedTo is string) &&
+             (!('assignedToUserId' in data) || data.assignedToUserId is string) &&
+             (!('dueTime' in data) || data.dueTime is string) &&
+             (!('remindersEnabled' in data) || data.remindersEnabled is bool) &&
+             (!('checkList' in data) || data.checkList is list) &&
+             (!('familyId' in data) || data.familyId is string);
+    }
+
+    function isValidProduct(data) {
+        return data.name is string && data.name.size() > 0 &&
+               data.userId is string &&
+               (!('baselinePrice' in data) || data.baselinePrice is number);
+    }
+
+    function isValidPriceRecord(data) {
+        return data.productId is string &&
+               data.price is number &&
+               data.userId is string;
+    }
+
+    function isValidExpense(data) {
+      return data.amount is number && data.amount > 0 &&
+             data.userId is string &&
+             data.category in ['rent', 'school_fees', 'utility', 'medical', 'insurance', 'emergency', 'misc', 'transport', 'project', 'debt_repayment'];
+    }
+
+    function isValidIncome(data) {
+      return data.amount is number && data.amount > 0 &&
+             data.userId is string &&
+             data.source is string && data.source.size() > 0;
+    }
+
+    function isValidSavingsGoal(data) {
+      return data.name is string && data.name.size() > 0 &&
+             data.targetAmount is number && data.targetAmount > 0 &&
+             data.userId is string;
+    }
+
+    function isValidLoan(data) {
+      return data.amount is number && data.amount > 0 &&
+             data.person is string && data.person.size() > 0 &&
+             data.type in ['borrowed', 'lent'] &&
+             data.userId is string;
+    }
+
+    function isValidTrip(data) {
+      return data.title is string && data.title.size() > 0 &&
+             data.userId is string &&
+             data.packingList is list &&
+             (!('familyId' in data) || data.familyId is string);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (
+        isOwner(userId) || 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.familyId == resource.data.familyId)
+      );
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if (isOwner(userId) || (resource.data.familyId != null && isFamilyOwner(resource.data.familyId))) && isValidUser(request.resource.data);
+    }
+
+    match /families/{familyId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.ownerId && isValidFamily(request.resource.data);
+      allow update: if isAuthenticated() && (
+        resource.data.ownerId == request.auth.uid || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.familyId == familyId
+      );
+    }
+
+    match /habits/{habitId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && isValidHabit(request.resource.data);
+      allow update: if isDocOwner() && isValidHabit(request.resource.data);
+      allow delete: if isDocOwner();
+    }
+
+    match /shoppingLists/{listId} {
+      allow read: if isAuthenticated() && (resource == null || !('familyId' in resource.data) || isFamilyMember(resource.data.familyId));
+      allow write: if isAuthenticated() && isValidShoppingList(request.resource.data) && (!('familyId' in request.resource.data) || request.resource.data.familyId == null || isFamilyMember(request.resource.data.familyId));
+    }
+
+    match /products/{productId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && isValidProduct(request.resource.data);
+        allow update: if isAuthenticated() && resource.data.userId == request.auth.uid && isValidProduct(request.resource.data);
+    }
+
+    match /priceRecords/{recordId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && isValidPriceRecord(request.resource.data);
+    }
+
+    match /chores/{choreId} {
+      allow read: if isAuthenticated() && (
+        resource == null || 
+        ('familyId' in resource.data && isFamilyMember(resource.data.familyId)) || 
+        ('assignedToUserId' in resource.data && resource.data.assignedToUserId == request.auth.uid)
+      );
+      allow write: if isAuthenticated() && isValidChore(request.resource.data) && (
+        !('familyId' in request.resource.data) || 
+        request.resource.data.familyId == null || 
+        isFamilyMember(request.resource.data.familyId)
+      );
+    }
+
+    match /mealPlans/{planId} {
+      allow read: if isAuthenticated() && (resource == null || !('familyId' in resource.data) || isFamilyMember(resource.data.familyId));
+      allow write: if isAuthenticated() && (resource == null || !('familyId' in resource.data) || isFamilyMember(resource.data.familyId)) && (request.resource == null || !('familyId' in request.resource.data) || request.resource.data.familyId == null || isFamilyMember(request.resource.data.familyId));
+    }
+
+    match /expenses/{expenseId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && isValidExpense(request.resource.data);
+      allow update: if isDocOwner() && isValidExpense(request.resource.data);
+      allow delete: if isDocOwner();
+    }
+
+    match /incomes/{incomeId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && isValidIncome(request.resource.data);
+      allow update: if isDocOwner() && isValidIncome(request.resource.data);
+      allow delete: if isDocOwner();
+    }
+
+    match /savingsGoals/{goalId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && isValidSavingsGoal(request.resource.data);
+      allow update: if isDocOwner() && isValidSavingsGoal(request.resource.data);
+      allow delete: if isDocOwner();
+    }
+
+    match /loans/{loanId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && isValidLoan(request.resource.data);
+      allow update: if isDocOwner() && isValidLoan(request.resource.data);
+      allow delete: if isDocOwner();
+    }
+
+    match /trips/{tripId} {
+      allow read: if isAuthenticated() && (resource == null || !('familyId' in resource.data) || isFamilyMember(resource.data.familyId) || resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && isValidTrip(request.resource.data) && (!('familyId' in request.resource.data) || request.resource.data.familyId == null || isFamilyMember(request.resource.data.familyId));
+      allow update: if isDocOwner() && isValidTrip(request.resource.data) && (!('familyId' in request.resource.data) || request.resource.data.familyId == null || isFamilyMember(request.resource.data.familyId));
+      allow delete: if isDocOwner();
+    }
+
+    match /wallets/{walletId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid || isFamilyOwner(get(/databases/$(database)/documents/users/$(resource.data.userId)).data.familyId));
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && isValidWallet(request.resource.data);
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isFamilyOwner(get(/databases/$(database)/documents/users/$(resource.data.userId)).data.familyId)) && isValidWallet(request.resource.data);
+    }
+
+    match /transactions/{transactionId} {
+      // Allows user to read their own transactions or transactions for their family
+      allow read: if isAuthenticated() && (resource == null || resource.data.fromUserId == request.auth.uid || resource.data.toUserId == request.auth.uid || ('familyId' in resource.data && isFamilyMember(resource.data.familyId)));
+      allow create: if isAuthenticated() && (request.resource.data.fromUserId == request.auth.uid) && isValidTransaction(request.resource.data);
+    }
+
+    match /bankAccounts/{accountId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid) && (request.resource == null || request.resource.data.userId == request.auth.uid) && (request.resource == null || isValidBankAccount(request.resource.data));
+    }
+
+    match /messages/{messageId} {
+       allow read: if isAuthenticated() && isFamilyMember(resource.data.familyId);
+       allow create: if isAuthenticated() && isFamilyMember(request.resource.data.familyId) && request.resource.data.senderId == request.auth.uid && isValidMessage(request.resource.data);
+    }
+
+    match /recipes/{recipeId} {
+      allow read: if isAuthenticated() && (resource == null || isFamilyMember(resource.data.familyId));
+      allow write: if isAuthenticated() && (request.resource == null || isFamilyMember(request.resource.data.familyId)) && (request.resource == null || isValidRecipe(request.resource.data));
+    }
+
+    match /receipts/{receiptId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid) && (request.resource == null || request.resource.data.userId == request.auth.uid) && (request.resource == null || isValidReceipt(request.resource.data));
+    }
+
+    match /growthTasks/{taskId} {
+      allow read: if isAuthenticated() && (resource == null || isFamilyMember(resource.data.familyId) || isAdmin());
+      allow create: if (isParent() || isAdmin()) && (request.resource == null || isFamilyMember(request.resource.data.familyId) || isAdmin()) && isValidGrowthTask(request.resource.data);
+      allow update: if isAuthenticated() && (resource != null && (isFamilyMember(resource.data.familyId) || isAdmin())) && (
+        isParent() || isAdmin() || (request.auth.uid == resource.data.assignedToUserId)
+      ) && isValidGrowthTask(request.resource.data);
+      allow delete: if (isParent() || isAdmin()) && (resource != null && (isFamilyMember(resource.data.familyId) || isAdmin()));
+    }
+
+    match /educationContent/{contentId} {
+      allow read: if isAuthenticated() && (resource == null || isFamilyMember(resource.data.familyId) || isAdmin());
+      allow write: if (isParent() || isAdmin()) && (request.resource == null || isFamilyMember(request.resource.data.familyId) || isAdmin()) && (request.resource == null || isValidEducationContent(request.resource.data));
+    }
+
+    match /achievements/{achievementId} {
+      allow read: if isAuthenticated() && (resource == null || isFamilyMember(get(/databases/$(database)/documents/users/$(resource.data.userId)).data.familyId) || isAdmin());
+      allow write: if (isParent() || isAdmin()) && isValidAchievement(request.resource.data);
+    }
+
+    match /events/{eventId} {
+      allow read: if isAuthenticated() && (resource == null || isFamilyMember(resource.data.familyId) || isAdmin());
+      allow write: if isAuthenticated() && (request.resource == null || isFamilyMember(request.resource.data.familyId) || isAdmin()) && (request.resource == null || isValidEvent(request.resource.data));
+    }
+
+    match /system_notifications/{notificationId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    match /private_messages/{messageId} {
+      allow read: if isAuthenticated() && (
+        request.auth.uid in resource.data.participants || isAdmin()
+      );
+      allow create: if isAuthenticated() && (
+        request.auth.uid in request.resource.data.participants &&
+        request.resource.data.participants.size() == 2
+      );
+    }
+    
+    match /notices/{noticeId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /communities/{communityId} {
+      allow read, write: if isAuthenticated();
+    }
+    // ===============================================================
+    // Forum & Support Helpers
+    // ===============================================================
+    function isValidForumThread(data) {
+      return data.keys().hasAll(['title', 'content', 'authorId', 'category']) &&
+             data.title is string && data.title.size() <= 200 &&
+             data.content is string && data.content.size() <= 10000 &&
+             data.authorId == request.auth.uid &&
+             (!('featuredImage' in data) || (data.featuredImage is string && data.featuredImage.size() < 1000000));
+    }
+
+    function isValidForumComment(data) {
+      return data.keys().hasAll(['content', 'authorId', 'threadId']) &&
+             data.content is string && data.content.size() <= 5000 &&
+             data.authorId == request.auth.uid;
+    }
+
+    match /forumThreads/{threadId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidForumThread(request.resource.data);
+      allow update: if isAuthenticated() && (
+        // Author can edit own post
+        (resource.data.authorId == request.auth.uid && isValidForumThread(request.resource.data)) ||
+        // Anyone can increment view/reply counts
+        (request.resource.data.diff(resource.data).affectedKeys().hasAll(['views']) || 
+         request.resource.data.diff(resource.data).affectedKeys().hasAll(['replyCount']))
+      );
+
+      match /comments/{commentId} {
+        allow read: if isAuthenticated();
+        allow list: if isAuthenticated();
+        allow create: if isAuthenticated() && isValidForumComment(request.resource.data);
+      }
+    }
+
+    match /support_tickets/{ticketId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /reports/{reportId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /support_conversations/{conversationId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+      allow create: if exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow update: if exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() && (get(/databases/$(database)/documents/support_conversations/$(conversationId)).data.userId == request.auth.uid || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+        allow create: if isAuthenticated() && (get(/databases/$(database)/documents/support_conversations/$(conversationId)).data.userId == request.auth.uid || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+      }
+    }
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}
