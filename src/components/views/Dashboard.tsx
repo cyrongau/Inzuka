@@ -22,7 +22,7 @@ import { db, handleFirestoreError, OperationType } from '../../lib/firebase';
 import { collection, query, where, onSnapshot, limit, orderBy, doc, getDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { format, parseISO, isAfter } from 'date-fns';
 import { cn } from '../../lib/utils';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Dashboard({ user, profile }: { user: User, profile: any }) {
   const [myChores, setMyChores] = useState<any[]>([]);
@@ -265,7 +265,7 @@ export default function Dashboard({ user, profile }: { user: User, profile: any 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, i) => (
-          <div key={i} className="bg-white p-6 rounded-[2rem] border border-black/5 shadow-sm hover:shadow-md transition-shadow group cursor-pointer">
+          <div key={i} className="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md transition-shadow group cursor-pointer">
             <div className="flex items-center justify-between mb-4">
               <div className={`${stat.bg} ${stat.color} p-3 rounded-2xl`}>
                 <stat.icon className="w-6 h-6" />
@@ -292,9 +292,9 @@ export default function Dashboard({ user, profile }: { user: User, profile: any 
               {myChores.length === 0 ? (
                 <div className="p-10 text-center opacity-20 italic">No tasks assigned to you tonight</div>
               ) : myChores.map((task) => (
-                <div key={task.id} className="flex items-center justify-between p-5 rounded-[1.5rem] border border-black/[0.03] hover:bg-black/[0.01] transition-colors group">
+                <div key={task.id} className="flex items-center justify-between p-5 rounded-[1.5rem] border border-black/[0.03] dark:border-white/[0.05] hover:bg-black/[0.01] dark:hover:bg-white/[0.02] transition-colors group">
                   <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${task.completed ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-300'}`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${task.completed ? 'bg-green-500 text-white' : 'bg-gray-100 dark:bg-zinc-800 text-gray-300 dark:text-gray-500'}`}>
                       {task.completed ? <CheckCircle2 className="w-6 h-6" /> : <Clock className="w-6 h-6" />}
                     </div>
                     <div>
@@ -310,7 +310,7 @@ export default function Dashboard({ user, profile }: { user: User, profile: any 
             </div>
           </div>
 
-          <div className="bg-black text-white rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden group">
+          <div className="bg-black dark:bg-black text-white rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden group">
             <div className="relative z-10">
               <h3 className="text-2xl font-medium mb-3 italic serif">Family Notice Board</h3>
               {latestNotice ? (
@@ -331,7 +331,7 @@ export default function Dashboard({ user, profile }: { user: User, profile: any 
 
         {/* Side Column: Habits */}
         <div className="space-y-8">
-          <div className="bg-white rounded-[2.5rem] p-8 border border-black/5 shadow-sm">
+          <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-black/5 dark:border-white/5 shadow-sm">
             <h3 className="text-lg font-bold mb-6 italic serif">My Daily Habits</h3>
             <div className="space-y-6">
               {myHabits.length === 0 ? (
@@ -343,12 +343,12 @@ export default function Dashboard({ user, profile }: { user: User, profile: any 
                 return (
                   <div key={habit.id} className="space-y-2">
                     <div className="flex justify-between text-xs font-bold uppercase tracking-widest">
-                      <span className="text-gray-900">{habit.name}</span>
+                      <span className="text-gray-900 dark:text-gray-100">{habit.name}</span>
                       <span className="text-orange-500">{totalDays}d Streak</span>
                     </div>
-                    <div className="h-2 bg-gray-50 rounded-full overflow-hidden border border-black/[0.02]">
+                    <div className="h-2 bg-gray-50 dark:bg-zinc-800 rounded-full overflow-hidden border border-black/[0.02]">
                       <div 
-                        className="h-full bg-black transition-all duration-1000" 
+                        className="h-full bg-black dark:bg-white transition-all duration-1000" 
                         style={{ width: `${Math.max(5, progress)}%` }}
                       />
                     </div>
@@ -358,25 +358,25 @@ export default function Dashboard({ user, profile }: { user: User, profile: any 
             </div>
           </div>
 
-            <div className="bg-orange-50 border border-orange-100 rounded-[2.5rem] p-8">
-              <h3 className="text-orange-900 font-bold mb-2 uppercase text-[10px] tracking-widest">Pro Tip</h3>
-              <p className="text-orange-800/70 text-sm leading-relaxed font-medium italic">
+            <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/30 rounded-[2.5rem] p-8">
+              <h3 className="text-orange-900 dark:text-orange-500 font-bold mb-2 uppercase text-[10px] tracking-widest">Pro Tip</h3>
+              <p className="text-orange-800/70 dark:text-orange-200/70 text-sm leading-relaxed font-medium italic">
                 "Consistency is the key to building lasting habits. Start small, win big."
               </p>
             </div>
 
             {/* Calendar Widget */}
-            <div className="bg-white rounded-[2.5rem] p-8 border border-black/5 shadow-sm">
+            <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-black/5 dark:border-white/5 shadow-sm">
                <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-bold italic serif">Coming Up</h3>
-                  <CalendarIcon className="w-5 h-5 text-gray-300" />
+                  <CalendarIcon className="w-5 h-5 text-gray-300 dark:text-gray-600" />
                </div>
                <div className="space-y-4">
                   {upcomingEvents.length === 0 ? (
                     <div className="text-center py-6 opacity-20 text-xs italic">No major plans this month</div>
                   ) : upcomingEvents.map(event => (
-                    <div key={event.id} className="flex items-center gap-4 group cursor-pointer hover:bg-black/5 p-2 rounded-2xl transition-all">
-                       <div className="w-12 h-12 bg-gray-50 rounded-2xl border border-black/5 flex flex-col items-center justify-center shrink-0 group-hover:bg-black group-hover:text-white transition-colors">
+                    <div key={event.id} className="flex items-center gap-4 group cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-2 rounded-2xl transition-all">
+                       <div className="w-12 h-12 bg-gray-50 dark:bg-zinc-800 rounded-2xl border border-black/5 dark:border-white/5 flex flex-col items-center justify-center shrink-0 group-hover:bg-black dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-black transition-colors">
                           <span className="text-[8px] font-black uppercase tracking-widest opacity-40">{format(parseISO(event.date), 'MMM')}</span>
                           <span className="text-lg font-black italic serif">{format(parseISO(event.date), 'd')}</span>
                        </div>
@@ -384,11 +384,11 @@ export default function Dashboard({ user, profile }: { user: User, profile: any 
                           <p className="text-xs font-bold truncate">{event.title}</p>
                           <p className="text-[9px] font-black uppercase text-blue-500 tracking-widest">{event.type}</p>
                        </div>
-                       <ChevronRight className="w-3 h-3 text-gray-200 group-hover:text-black transition-all" />
+                       <ChevronRight className="w-3 h-3 text-gray-200 dark:text-gray-600 group-hover:text-black dark:group-hover:text-white transition-all" />
                     </div>
                   ))}
                </div>
-               <button className="w-full mt-6 py-3 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-black transition-colors flex items-center justify-center gap-2">
+               <button className="w-full mt-6 py-3 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-black dark:hover:text-white transition-colors flex items-center justify-center gap-2">
                  View Full Calendar <ChevronRight className="w-3 h-3" />
                </button>
             </div>
@@ -401,19 +401,19 @@ export default function Dashboard({ user, profile }: { user: User, profile: any 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-md bg-black/40"
+              className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-md bg-black/40 dark:bg-black/80"
             >
               <motion.div 
                 initial={{ scale: 0.95, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.95, y: 20 }}
-                className="bg-white w-full max-w-lg rounded-[3rem] p-8 shadow-2xl relative border border-black/5"
+                className="bg-white dark:bg-zinc-900 w-full max-w-lg rounded-[3rem] p-8 shadow-2xl relative border border-black/5 dark:border-white/5"
               >
                 <div className="flex items-center justify-between mb-6">
                    <h3 className="text-xl font-bold italic serif">Post Update</h3>
                    <button 
                      onClick={() => setShowNoticeModal(false)}
-                     className="p-2 text-gray-400 hover:bg-gray-100 hover:text-black rounded-full transition-all"
+                     className="p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-black dark:hover:text-white rounded-full transition-all"
                    >
                      <X className="w-5 h-5" />
                    </button>
@@ -423,12 +423,12 @@ export default function Dashboard({ user, profile }: { user: User, profile: any 
                     placeholder="Share something with the family..."
                     value={noticeText}
                     onChange={e => setNoticeText(e.target.value)}
-                    className="w-full bg-gray-50 border border-black/5 p-5 rounded-2xl font-medium min-h-[120px] focus:ring-1 focus:ring-black/10 outline-none leading-relaxed"
+                    className="w-full bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 p-5 rounded-2xl font-medium min-h-[120px] focus:ring-1 focus:ring-black/10 dark:focus:ring-white/10 outline-none leading-relaxed"
                   />
                   <button 
                     onClick={handlePostNotice}
                     disabled={!noticeText.trim()}
-                    className="w-full bg-black text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest hover:scale-[1.02] active:scale-95 transition-transform disabled:opacity-50 disabled:hover:scale-100"
+                    className="w-full bg-black dark:bg-white text-white dark:text-black py-4 rounded-xl font-black uppercase text-xs tracking-widest hover:scale-[1.02] active:scale-95 transition-transform disabled:opacity-50 disabled:hover:scale-100"
                   >
                     Broadcast
                   </button>

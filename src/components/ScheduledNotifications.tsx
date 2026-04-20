@@ -22,7 +22,7 @@ import {
   isAfter,
   startOfDay
 } from 'date-fns';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, AlertTriangle, Zap, X, Calendar as CalendarIcon, Target } from 'lucide-react';
 import { showToast } from '../services/notificationService';
 

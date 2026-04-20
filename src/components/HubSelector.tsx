@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Home, Users, ArrowRight, ShieldCheck, HeartPulse } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -11,15 +11,15 @@ interface HubSelectorProps {
 
 export default function HubSelector({ onSelect, hasFamily, user }: HubSelectorProps) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#f5f5f5] p-6">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#f5f5f5] dark:bg-zinc-950 p-6 transition-colors duration-300">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="max-w-4xl w-full"
       >
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-6xl font-black italic serif tracking-tighter mb-4">Choose Your Focus.</h1>
-          <p className="text-gray-500 font-medium max-w-lg mx-auto">
+          <h1 className="text-4xl md:text-6xl font-black italic serif tracking-tighter mb-4 text-black dark:text-white">Choose Your Focus.</h1>
+          <p className="text-gray-500 dark:text-gray-400 font-medium max-w-lg mx-auto">
             Welcome back, {user?.displayName}. Where would you like to direct your energy today?
           </p>
         </div>
@@ -28,14 +28,14 @@ export default function HubSelector({ onSelect, hasFamily, user }: HubSelectorPr
           {/* Family Hub Card */}
           <button 
             onClick={() => onSelect('family')}
-            className="group relative bg-white rounded-[3rem] p-10 border border-black/5 hover:border-black/20 hover:shadow-2xl transition-all duration-500 overflow-hidden text-left"
+            className="group relative bg-white dark:bg-zinc-900 rounded-[3rem] p-10 border border-black/5 dark:border-white/5 hover:border-black/20 dark:hover:border-white/20 hover:shadow-2xl transition-all duration-500 overflow-hidden text-left"
           >
-            <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/5 rounded-full blur-[80px] group-hover:bg-orange-500/10 transition-all"></div>
-            <div className="w-20 h-20 bg-orange-50 rounded-[2rem] flex items-center justify-center mb-8 border border-orange-100 group-hover:scale-110 transition-transform duration-500">
-              <Home className="w-10 h-10 text-orange-600" />
+            <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/5 dark:bg-orange-500/10 rounded-full blur-[80px] group-hover:bg-orange-500/10 dark:group-hover:bg-orange-500/20 transition-all"></div>
+            <div className="w-20 h-20 bg-orange-50 dark:bg-orange-500/10 rounded-[2rem] flex items-center justify-center mb-8 border border-orange-100 dark:border-orange-500/20 group-hover:scale-110 transition-transform duration-500">
+              <Home className="w-10 h-10 text-orange-600 dark:text-orange-500" />
             </div>
-            <h2 className="text-3xl font-black italic serif mb-4">Family Hub</h2>
-            <p className="text-gray-500 font-medium mb-8 leading-relaxed">
+            <h2 className="text-3xl font-black italic serif mb-4 text-black dark:text-white">Family Hub</h2>
+            <p className="text-gray-500 dark:text-gray-400 font-medium mb-8 leading-relaxed">
               Manage your household, track budgets, organize chores, and coordinate schedules with your immediate family.
             </p>
             <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-orange-600">

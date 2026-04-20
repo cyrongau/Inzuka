@@ -38,7 +38,7 @@ import {
   setDoc,
   deleteDoc
 } from 'firebase/firestore';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
 import { format } from 'date-fns';
 import { Html5QrcodeScanner } from 'html5-qrcode';

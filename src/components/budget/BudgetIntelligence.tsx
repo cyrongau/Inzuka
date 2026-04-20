@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, Sparkles, Brain, X, Receipt, Tag, Save, Loader2, MessageSquareText } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';

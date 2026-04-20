@@ -20,7 +20,7 @@ import {
 import { db } from '../../../lib/firebase';
 import { collection, query, onSnapshot, orderBy, limit, addDoc, serverTimestamp, where, doc, updateDoc, increment, getDocs } from 'firebase/firestore';
 import { cn } from '../../../lib/utils';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';

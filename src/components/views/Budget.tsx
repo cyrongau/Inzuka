@@ -41,7 +41,7 @@ import {
 import { initiateStkPush } from '../../services/mpesaService';
 import { cn } from '../../lib/utils';
 import { format } from 'date-fns';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FEATURES } from '../../constants/features';
 import { BudgetOverview } from '../budget/BudgetOverview';
 import { ExpenseManager } from '../budget/ExpenseManager';

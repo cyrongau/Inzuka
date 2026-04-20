@@ -17,7 +17,7 @@ import {
 import { db } from '../../../lib/firebase';
 import { doc, onSnapshot, updateDoc, arrayUnion } from 'firebase/firestore';
 import { cn } from '../../../lib/utils';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 
 // Module Components (stubs or small versions for now)

@@ -1,7 +1,15 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
+import { 
+  User, 
+  onAuthStateChanged, 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  signOut,
+  signInWithCredential
+} from 'firebase/auth';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
+import { Platform } from 'react-native';
 
 interface AuthContextType {
   user: User | null;
@@ -62,8 +70,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async () => {
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      if (Platform.OS === 'web') {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+      } else {
+        // Dynamic import for Native-only libraries to prevent web crashes
+        const Google = await import('expo-auth-session/providers/google');
+        // This is a simplified placeholder for the native flow
+        // In actual Native execution, useAuthRequest would be used via a hook
+        console.warn('Native Sign-in triggered. Ensure expo-auth-session is configured.');
+      }
     } catch (error) {
       console.error('Login error:', error);
     }

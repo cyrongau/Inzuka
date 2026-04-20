@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { HandCoins, ArrowUpRight, ArrowDownLeft, Plus, Trash2, CheckCircle2, User as UserIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { format } from 'date-fns';

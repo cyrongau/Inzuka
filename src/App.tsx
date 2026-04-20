@@ -21,7 +21,7 @@ import {
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
 import { doc, getDoc, setDoc, onSnapshot, collection, query, where, orderBy, limit } from 'firebase/firestore';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from './lib/utils';
 
 import { format, startOfWeek, addDays, subDays, isSameDay } from 'date-fns';
@@ -52,10 +52,13 @@ import PublicVerification from './components/views/community/PublicVerification'
 import ScheduledNotifications from './components/ScheduledNotifications';
 import { useAuth } from './context/AuthContext.tsx';
 
+import { useTheme } from './context/ThemeContext';
+
 const BRAND_LOGO = "/logo.png"; // Place your logo in /public/logo.png
 
 export default function App() {
   const { user, profile, loading, signIn, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [activeHub, setActiveHub] = useState<'selection' | 'family' | 'community'>('selection');
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedCommunityId, setSelectedCommunityId] = useState<string | null>(null);
@@ -236,7 +239,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f5] text-black font-sans selection:bg-black selection:text-white">
+    <div className="flex min-h-screen bg-[#f5f5f5] dark:bg-zinc-950 text-black dark:text-gray-100 font-sans selection:bg-black dark:selection:bg-white selection:text-white dark:selection:text-black transition-colors duration-300">
       <ScheduledNotifications user={user} profile={profile} />
       {/* Mobile Sidebar Toggle */}
       <button 
@@ -248,14 +251,14 @@ export default function App() {
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed inset-y-0 left-0 z-40 bg-white border-r border-black/5 transition-all duration-300 lg:translate-x-0 lg:static lg:block relative",
+        "fixed inset-y-0 left-0 z-40 bg-white dark:bg-zinc-900 border-r border-black/5 dark:border-white/5 transition-all duration-300 lg:translate-x-0 lg:static lg:block relative",
         isSidebarOpen ? "translate-x-0" : "-translate-x-full",
         isSidebarCollapsed ? "w-24" : "w-72"
       )}>
         {/* Collapse Toggle Desktop */}
         <button 
           onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-          className="hidden lg:flex absolute -right-4 top-10 w-8 h-8 bg-white border border-black/5 rounded-full items-center justify-center shadow-lg hover:bg-black hover:text-white transition-all z-50"
+          className="hidden lg:flex absolute -right-4 top-10 w-8 h-8 bg-white dark:bg-zinc-800 border border-black/5 dark:border-white/10 rounded-full items-center justify-center shadow-lg hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black transition-all z-50 text-black dark:text-white"
         >
           {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </button>
@@ -292,12 +295,12 @@ export default function App() {
                 className={cn(
                   "w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all group",
                   activeTab === item.id 
-                    ? "bg-black text-white shadow-md shadow-black/10" 
-                    : "text-gray-500 hover:bg-black/5 hover:text-black",
+                    ? "bg-black dark:bg-white text-white dark:text-black shadow-md shadow-black/10 dark:shadow-white/10" 
+                    : "text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white",
                   isSidebarCollapsed && "justify-center px-0"
                 )}
               >
-                <item.icon className={cn("w-5 h-5 shrink-0", activeTab === item.id ? "text-white" : "text-gray-400 group-hover:text-black")} />
+                <item.icon className={cn("w-5 h-5 shrink-0", activeTab === item.id ? "text-white dark:text-black" : "text-gray-400 group-hover:text-black dark:group-hover:text-white")} />
                 {!isSidebarCollapsed && <span className="font-medium">{item.label}</span>}
               </button>
             ))}
@@ -359,31 +362,37 @@ export default function App() {
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
         <Toaster position="top-right" expand={false} richColors />
-        <header className="p-6 lg:px-10 flex items-center justify-between sticky top-0 bg-[#f5f5f5]/80 backdrop-blur-md z-30">
+        <header className="p-6 lg:px-10 flex items-center justify-between sticky top-0 bg-[#f5f5f5]/80 dark:bg-zinc-950/80 backdrop-blur-md z-30">
           <div>
-            <h2 className="text-sm font-medium text-gray-500 uppercase tracking-widest mb-1">
+            <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">
               {menuItems.find(m => m.id === activeTab)?.label}
             </h2>
-            <h1 className="text-2xl font-semibold tracking-tight">
+            <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-white">
               {activeTab === 'dashboard' ? `Welcome back, ${user.displayName?.split(' ')[0]}` : menuItems.find(m => m.id === activeTab)?.label}
             </h1>
           </div>
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="w-10 h-10 bg-white dark:bg-zinc-800 rounded-full border border-black/5 dark:border-white/5 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors"
+            >
+              {theme === 'dark' ? <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-gray-400 dark:text-gray-300"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg> : <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-gray-600"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>}
+            </button>
             <button 
               onClick={() => {
                 setActiveHub('selection');
                 setActiveTab('dashboard');
               }}
-              className="px-4 h-10 bg-black text-white text-xs font-bold uppercase tracking-widest rounded-full hover:bg-black/80 transition-colors flex items-center gap-2"
+              className="px-4 h-10 bg-black dark:bg-white text-white dark:text-black text-xs font-bold uppercase tracking-widest rounded-full hover:bg-black/80 dark:hover:bg-white/80 transition-colors flex items-center gap-2"
             >
               <Layers className="w-4 h-4" /> Switch Hub
             </button>
             <div className="relative">
               <button 
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="w-10 h-10 bg-white rounded-full border border-black/5 flex items-center justify-center hover:bg-gray-50 transition-colors relative"
+                className="w-10 h-10 bg-white dark:bg-zinc-800 rounded-full border border-black/5 dark:border-white/5 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors relative"
               >
-                <Bell className="w-5 h-5 text-gray-600" />
+                <Bell className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                 {notifications.some(n => !n.isRead) && (
                   <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
                 )}
@@ -400,11 +409,11 @@ export default function App() {
             <button 
               onClick={() => setActiveTab('profile')}
               className={cn(
-                "w-10 h-10 bg-white rounded-full border border-black/5 flex items-center justify-center hover:bg-gray-50 transition-colors",
-                activeTab === 'profile' && "border-black bg-black text-white"
+                "w-10 h-10 bg-white dark:bg-zinc-800 rounded-full border border-black/5 dark:border-white/5 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors",
+                activeTab === 'profile' && "border-black dark:border-white bg-black dark:bg-white text-white dark:text-black"
               )}
             >
-              <Settings className={cn("w-5 h-5", activeTab === 'profile' ? "text-white" : "text-gray-600")} />
+              <Settings className={cn("w-5 h-5", activeTab === 'profile' ? "text-white dark:text-black" : "text-gray-600 dark:text-gray-300")} />
             </button>
           </div>
         </header>

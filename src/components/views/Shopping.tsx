@@ -50,7 +50,7 @@ import {
 import { cn } from '../../lib/utils';
 import { Html5QrcodeScanner, Html5Qrcode } from 'html5-qrcode';
 import { getShoppingInsights } from '../../services/geminiService';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { 
   LineChart, 

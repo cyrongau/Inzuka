@@ -14,7 +14,7 @@ import {
 import { db } from '../../../lib/firebase';
 import { collection, query, onSnapshot, where, limit } from 'firebase/firestore';
 import { cn } from '../../../lib/utils';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 
 export default function HubGroups({ user, profile, onSelect }: { user: User, profile: any, onSelect: (id: string) => void }) {
   const [searchTerm, setSearchTerm] = useState('');

@@ -17,7 +17,7 @@ import {
   User as UserIcon,
   X
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { db, handleFirestoreError, OperationType } from '../../lib/firebase';
 import { 
   collection, 

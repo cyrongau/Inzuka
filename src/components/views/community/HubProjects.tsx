@@ -14,7 +14,7 @@ import {
 import { db } from '../../../lib/firebase';
 import { collection, query, onSnapshot, where, limit } from 'firebase/firestore';
 import { cn } from '../../../lib/utils';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 
 export default function HubProjects({ user }: { user: User }) {
   const [loading, setLoading] = useState(true);

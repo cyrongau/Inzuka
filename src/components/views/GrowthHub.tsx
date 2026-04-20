@@ -26,7 +26,7 @@ import {
   Award,
   Zap
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { db, handleFirestoreError, OperationType } from '../../lib/firebase';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, increment, serverTimestamp, orderBy } from 'firebase/firestore';
 import { cn } from '../../lib/utils';

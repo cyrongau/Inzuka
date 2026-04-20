@@ -36,7 +36,7 @@ import {
   limit 
 } from 'firebase/firestore';
 import { cn } from '../../lib/utils';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { RefreshCcw } from 'lucide-react';
 
 const FAMILY_ROLES = ["Father", "Mother", "Guardian", "Son", "Daughter", "Relative", "Help"];

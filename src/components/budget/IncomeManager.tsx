@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, Plus, ArrowUpRight, DollarSign, Calendar, Target, Briefcase } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { format } from 'date-fns';

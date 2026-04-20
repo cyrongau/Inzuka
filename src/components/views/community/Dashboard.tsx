@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { db } from '../../../lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { cn } from '../../../lib/utils';
 import CreateCommunityWizard from './CreateCommunityWizard';
 

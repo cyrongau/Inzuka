@@ -29,7 +29,7 @@ import {
   limit,
   doc
 } from 'firebase/firestore';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
 import { format } from 'date-fns';
 import { getSmartReply } from '../../services/geminiService';
