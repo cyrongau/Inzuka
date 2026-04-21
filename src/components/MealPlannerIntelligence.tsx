@@ -142,35 +142,31 @@ export const MealPlannerIntelligence: React.FC<MealPlannerIntelligenceProps> = (
       <button
         onClick={generateWeeklyAIPlan}
         disabled={isGenerating}
-        className="flex items-center justify-between p-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-3xl transition-all shadow-lg group disabled:opacity-50"
+        className="flex items-center gap-4 p-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[2rem] transition-all shadow-lg group disabled:opacity-50 relative overflow-hidden w-full text-left"
       >
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-            {isGenerating ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6" />}
-          </div>
-          <div className="text-left">
-            <p className="text-sm font-bold uppercase tracking-widest opacity-60">AI Intelligence</p>
-            <p className="text-lg font-bold serif italic">Generate Full Week</p>
-          </div>
+        <div className="w-12 h-12 shrink-0 bg-white/20 rounded-2xl flex items-center justify-center relative z-10">
+          {isGenerating ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6" />}
         </div>
-        <ChefHat className="w-10 h-10 opacity-10 group-hover:opacity-20 transition-opacity" />
+        <div className="flex-1 min-w-0 relative z-10">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/70 truncate">AI Intelligence</p>
+          <p className="text-lg font-bold serif italic mt-0.5 truncate">Auto-Generate Week</p>
+        </div>
+        <ChefHat className="absolute -right-4 -bottom-4 w-24 h-24 opacity-10 group-hover:opacity-20 transition-opacity z-0 pointer-events-none" />
       </button>
 
       <button
         onClick={syncToShoppingList}
         disabled={isSyncing}
-        className="flex items-center justify-between p-6 bg-white border-2 border-black text-black hover:bg-gray-50 rounded-3xl transition-all shadow-lg group disabled:opacity-50"
+        className="flex items-center gap-4 p-6 bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 text-black dark:text-white hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-[2rem] transition-all shadow-lg group disabled:opacity-50 relative overflow-hidden w-full text-left"
       >
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-black text-white rounded-2xl flex items-center justify-center">
-            {isSyncing ? <Loader2 className="w-6 h-6 animate-spin" /> : <ShoppingCart className="w-6 h-6" />}
-          </div>
-          <div className="text-left">
-            <p className="text-sm font-bold uppercase tracking-widest opacity-40">Inventory Sync</p>
-            <p className="text-lg font-bold serif italic uppercase">Sync Missing To List</p>
-          </div>
+        <div className="w-12 h-12 shrink-0 bg-black dark:bg-white text-white dark:text-black rounded-2xl flex items-center justify-center relative z-10">
+          {isSyncing ? <Loader2 className="w-6 h-6 animate-spin" /> : <ShoppingCart className="w-6 h-6" />}
         </div>
-        <Brain className="w-10 h-10 opacity-5 group-hover:opacity-10 transition-opacity" />
+        <div className="flex-1 min-w-0 relative z-10">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 truncate">Inventory Sync</p>
+          <p className="text-lg font-bold serif italic mt-0.5 truncate">Send Missing to List</p>
+        </div>
+        <Brain className="absolute -right-4 -bottom-4 w-24 h-24 opacity-5 group-hover:opacity-10 transition-opacity z-0 pointer-events-none text-black dark:text-white" />
       </button>
     </div>
   );

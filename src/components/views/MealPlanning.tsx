@@ -194,16 +194,16 @@ export default function MealPlanning({ user, profile }: { user: User, profile: a
   if (!familyId) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8 space-y-6">
-        <div className="w-24 h-24 bg-indigo-50 text-indigo-400 rounded-[2.5rem] flex items-center justify-center">
+        <div className="w-24 h-24 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-400 rounded-[2.5rem] flex items-center justify-center">
           <Utensils className="w-10 h-10" />
         </div>
         <div>
-          <h3 className="text-2xl font-bold italic serif tracking-tight">Family Menu Sync Required</h3>
-          <p className="text-gray-500 max-w-md mt-2 font-light">Meal planning is shared between household members. Please setup your household in your profile to start planning together.</p>
+          <h3 className="text-2xl font-bold italic serif tracking-tight text-black dark:text-white">Family Menu Sync Required</h3>
+          <p className="text-gray-500 dark:text-gray-400 max-w-md mt-2 font-light">Meal planning is shared between household members. Please setup your household in your profile to start planning together.</p>
         </div>
         <button 
           onClick={() => window.location.hash = '#profile'}
-          className="bg-black text-white px-8 py-4 rounded-2xl font-bold hover:scale-105 transition-transform"
+          className="bg-black dark:bg-white text-white dark:text-black px-8 py-4 rounded-2xl font-bold hover:scale-105 transition-transform"
         >
           Setup My Family
         </button>
@@ -215,14 +215,14 @@ export default function MealPlanning({ user, profile }: { user: User, profile: a
     <div className="max-w-6xl mx-auto space-y-10 pb-20 px-4">
       {/* Date Navigator Header */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-        <h2 className="text-4xl font-light italic serif tracking-tight">Weekly <span className="font-bold not-italic">Nourishment</span></h2>
+        <h2 className="text-4xl font-light italic serif tracking-tight text-black dark:text-white">Weekly <span className="font-bold not-italic">Nourishment</span></h2>
       </div>
 
       {/* Hero Timeline Navigator with Arrows and Swipe */}
       <div className="relative group/nav flex items-center justify-center gap-4">
         <button 
           onClick={() => setSelectedDate(subDays(selectedDate, 1))}
-          className="w-12 h-12 rounded-full border border-black/5 bg-white shadow-sm flex items-center justify-center hover:bg-black hover:text-white transition-all active:scale-95 shrink-0"
+          className="w-12 h-12 rounded-full border border-black/5 dark:border-white/5 bg-white dark:bg-zinc-900 shadow-sm flex items-center justify-center hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-black dark:text-white transition-all active:scale-95 shrink-0"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
@@ -240,18 +240,18 @@ export default function MealPlanning({ user, profile }: { user: User, profile: a
                     className={cn(
                       "relative shrink-0 w-20 md:w-24 p-4 md:p-6 rounded-[2.2rem] flex flex-col items-center gap-1 transition-all border",
                       isSelected 
-                        ? "bg-black text-white border-black shadow-2xl translate-y-2" 
-                        : "bg-white text-gray-400 border-black/5 hover:border-black/10"
+                        ? "bg-black dark:bg-white text-white dark:text-black border-black dark:border-white shadow-2xl translate-y-2" 
+                        : "bg-white dark:bg-zinc-900 text-gray-400 dark:text-gray-500 border-black/5 dark:border-white/5 hover:border-black/10 dark:hover:border-white/10"
                     )}
                   >
                     <span className="text-[10px] font-bold uppercase tracking-widest">{format(day, 'EEE')}</span>
                     <span className="text-2xl font-bold">{format(day, 'd')}</span>
                     {isSelected && (
-                      <motion.div layoutId="activeLine" className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-[2px] h-10 bg-black/5" />
+                      <motion.div layoutId="activeLine" className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-[2px] h-10 bg-black/5 dark:bg-white/10" />
                     )}
                   </motion.button>
                   {i < weekDays.length - 1 && (
-                    <div className="w-2 md:w-4 h-[1px] bg-black/5 shrink-0" />
+                    <div className="w-2 md:w-4 h-[1px] bg-black/5 dark:bg-white/5 shrink-0" />
                   )}
                 </React.Fragment>
               );
@@ -261,7 +261,7 @@ export default function MealPlanning({ user, profile }: { user: User, profile: a
 
         <button 
           onClick={() => setSelectedDate(addDays(selectedDate, 1))}
-          className="w-12 h-12 rounded-full border border-black/5 bg-white shadow-sm flex items-center justify-center hover:bg-black hover:text-white transition-all active:scale-95 shrink-0"
+          className="w-12 h-12 rounded-full border border-black/5 dark:border-white/5 bg-white dark:bg-zinc-900 shadow-sm flex items-center justify-center hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-black dark:text-white transition-all active:scale-95 shrink-0"
         >
           <ChevronRight className="w-5 h-5" />
         </button>
@@ -280,7 +280,7 @@ export default function MealPlanning({ user, profile }: { user: User, profile: a
               onDragEnd={handleDragEnd}
               className="bg-white rounded-[4rem] shadow-[-20px_40px_80px_rgba(0,0,0,0.06)] overflow-hidden border border-black/5 cursor-grab active:cursor-grabbing"
             >
-              <div className="grid grid-cols-1 md:grid-cols-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 bg-white dark:bg-zinc-900 rounded-[4rem] overflow-hidden border border-black/5 dark:border-white/5">
                 {/* Column 1: Aesthetic Dynamic Image */}
                 <div 
                   onClick={() => {
@@ -321,19 +321,19 @@ export default function MealPlanning({ user, profile }: { user: User, profile: a
                 </div>
 
                 {/* Column 2: Planning List */}
-                <div className="p-10 md:p-16 lg:p-20 flex flex-col justify-center bg-gray-50/20">
+                <div className="p-10 md:p-16 lg:p-20 flex flex-col justify-center bg-gray-50/20 dark:bg-zinc-800/20">
                   <div className="flex items-center justify-between mb-16">
                      <div className="flex items-center gap-4">
-                       <div className="w-2 h-12 bg-black rounded-full" />
-                       <h3 className="text-4xl font-bold tracking-tighter italic serif">Today's <span className="not-italic">Selection</span></h3>
+                       <div className="w-2 h-12 bg-black dark:bg-white rounded-full" />
+                       <h3 className="text-4xl font-bold tracking-tighter italic serif text-black dark:text-white">Today's <span className="not-italic">Selection</span></h3>
                      </div>
-                     <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-full border border-black/5 shadow-sm">
-                        <UserIcon className="w-4 h-4 text-gray-400" />
-                        <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Servings</span>
-                        <div className="flex items-center gap-2 border-l border-black/10 pl-3 ml-1">
-                           <button onClick={() => updatePlanDoc(activePlan.date, { servings: Math.max(1, (activePlan.servings || 2) - 1) })} className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200">-</button>
+                     <div className="flex items-center gap-3 bg-white dark:bg-zinc-800 px-4 py-2 rounded-full border border-black/5 dark:border-white/5 shadow-sm">
+                        <UserIcon className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                        <span className="text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">Servings</span>
+                        <div className="flex items-center gap-2 border-l border-black/10 dark:border-white/10 pl-3 ml-1 text-black dark:text-white">
+                           <button onClick={() => updatePlanDoc(activePlan.date, { servings: Math.max(1, (activePlan.servings || 2) - 1) })} className="w-6 h-6 rounded-full bg-gray-100 dark:bg-zinc-700 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-zinc-600">-</button>
                            <span className="font-bold text-sm w-4 text-center">{activePlan.servings || 2}</span>
-                           <button onClick={() => updatePlanDoc(activePlan.date, { servings: (activePlan.servings || 2) + 1 })} className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200">+</button>
+                           <button onClick={() => updatePlanDoc(activePlan.date, { servings: (activePlan.servings || 2) + 1 })} className="w-6 h-6 rounded-full bg-gray-100 dark:bg-zinc-700 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-zinc-600">+</button>
                         </div>
                      </div>
                   </div>
@@ -356,8 +356,8 @@ export default function MealPlanning({ user, profile }: { user: User, profile: a
                                   if (recipe) setViewingRecipe(recipe);
                                 }}
                                 className={cn(
-                                  "shrink-0 w-16 h-16 rounded-[1.8rem] flex items-center justify-center transition-all duration-700 shadow-sm border border-black/5 cursor-pointer",
-                                  isActive ? "bg-black text-white rotate-12 scale-110 shadow-xl" : "bg-white text-gray-300 group-hover:text-black group-hover:rotate-6"
+                                  "shrink-0 w-16 h-16 rounded-[1.8rem] flex items-center justify-center transition-all duration-700 shadow-sm border border-black/5 dark:border-white/5 cursor-pointer",
+                                  isActive ? "bg-black dark:bg-white text-white dark:text-black rotate-12 scale-110 shadow-xl" : "bg-white dark:bg-zinc-800 text-gray-300 dark:text-gray-600 group-hover:text-black dark:group-hover:text-white group-hover:rotate-6"
                               )}>
                                  {activePlan.meals?.[type.id] ? (
                                     <img 
@@ -374,12 +374,12 @@ export default function MealPlanning({ user, profile }: { user: User, profile: a
                                  <div className="flex items-center gap-3">
                                     <span className={cn(
                                       "text-[11px] font-bold uppercase tracking-[0.3em] transition-colors duration-500",
-                                      isActive ? "text-black" : "text-gray-300"
+                                      isActive ? "text-black dark:text-white" : "text-gray-300 dark:text-gray-600"
                                     )}>
                                       {type.label}
                                     </span>
-                                     {isActive && <motion.div layoutId="activeDot" className="w-1.5 h-1.5 bg-black rounded-full" />}
-                                    <div className="h-[1px] flex-1 bg-black/5" />
+                                     {isActive && <motion.div layoutId="activeDot" className="w-1.5 h-1.5 bg-black dark:bg-white rounded-full" />}
+                                    <div className="h-[1px] flex-1 bg-black/5 dark:bg-white/5" />
                                  </div>
                                  <input 
                                   list="meal-suggestions"
@@ -387,8 +387,8 @@ export default function MealPlanning({ user, profile }: { user: User, profile: a
                                   onChange={(e) => updateMeal(activePlan.date, type.id, e.target.value)}
                                   placeholder={`Whatcha eating?`}
                                   className={cn(
-                                    "w-full bg-transparent border-0 p-0 text-xl md:text-2xl font-medium focus:ring-0 resize-none leading-tight transition-all duration-500",
-                                    isActive ? "text-black opacity-100 translate-x-2" : "text-gray-200 opacity-60 hover:opacity-100"
+                                    "w-full bg-transparent border-0 p-0 text-xl md:text-2xl font-medium focus:ring-0 resize-none leading-tight transition-all duration-500 outline-none",
+                                    isActive ? "text-black dark:text-white opacity-100 translate-x-2" : "text-gray-200 dark:text-gray-600 opacity-60 hover:opacity-100"
                                   )}
                                 />
                                 <datalist id="meal-suggestions">
@@ -415,23 +415,23 @@ export default function MealPlanning({ user, profile }: { user: User, profile: a
                   </div>
 
                   <div className="mt-8">
-                     <button onClick={() => setShowRecipeBook(true)} className="w-full bg-white border-2 border-dashed border-black/10 text-black px-8 py-5 rounded-[2rem] font-bold text-sm flex items-center justify-center gap-3 hover:bg-black hover:text-white transition-all shadow-sm active:scale-95">
+                     <button onClick={() => setShowRecipeBook(true)} className="w-full bg-white dark:bg-zinc-800 border-2 border-dashed border-black/10 dark:border-white/10 text-black dark:text-white px-8 py-5 rounded-[2rem] font-bold text-sm flex items-center justify-center gap-3 hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black transition-all shadow-sm active:scale-95">
                         <Utensils className="w-5 h-5" /> Browse Recipe Book
                      </button>
                   </div>
 
                   {/* Family Suggestions */}
-                  <div className="mt-12 pt-10 border-t border-black/5 space-y-6">
-                     <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Family Suggestions</h4>
+                  <div className="mt-12 pt-10 border-t border-black/5 dark:border-white/5 space-y-6">
+                     <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">Family Suggestions</h4>
                      <div className="space-y-2">
                         {activePlan.suggestions?.map((s: any, i: number) => (
-                           <div key={i} className="flex gap-3 items-center bg-white p-4 rounded-2xl border border-black/5 shadow-sm text-sm group">
-                               <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs uppercase shrink-0">
+                           <div key={i} className="flex gap-3 items-center bg-white dark:bg-zinc-800 p-4 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm text-sm group">
+                               <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs uppercase shrink-0">
                                   {s.user.charAt(0)}
                                </div>
                                <div>
-                                  <span className="font-bold text-gray-400 block text-[10px] uppercase tracking-widest">{s.user} suggests</span>
-                                  <span className="font-medium">{s.text}</span>
+                                  <span className="font-bold text-gray-400 dark:text-gray-500 block text-[10px] uppercase tracking-widest">{s.user} suggests</span>
+                                  <span className="font-medium text-black dark:text-white">{s.text}</span>
                                </div>
                            </div>
                         ))}
@@ -442,9 +442,9 @@ export default function MealPlanning({ user, profile }: { user: User, profile: a
                           onChange={e => setSuggestionText(e.target.value)}
                           onKeyDown={e => e.key === 'Enter' && handleAddSuggestion()}
                           placeholder={`What would you like for Dinner, ${user?.displayName?.split(' ')[0] || 'there'}?`} 
-                          className="flex-1 bg-white p-4 text-sm rounded-2xl border border-black/5 font-medium outline-none focus:border-black/20" 
+                          className="flex-1 bg-white dark:bg-zinc-800 text-black dark:text-white p-4 text-sm rounded-2xl border border-black/5 dark:border-white/5 font-medium outline-none focus:border-black/20 dark:focus:border-white/20" 
                         />
-                        <button onClick={handleAddSuggestion} className="bg-black text-white p-4 rounded-2xl hover:scale-105 transition-all w-14 flex items-center justify-center">
+                        <button onClick={handleAddSuggestion} className="bg-black dark:bg-white text-white dark:text-black p-4 rounded-2xl hover:scale-105 transition-all w-14 flex items-center justify-center">
                            <Plus className="w-5 h-5" />
                         </button>
                      </div>
@@ -507,28 +507,28 @@ export default function MealPlanning({ user, profile }: { user: User, profile: a
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-[3rem] p-10 max-w-2xl w-full max-h-[90vh] shadow-2xl relative overflow-hidden flex flex-col"
+              className="bg-white dark:bg-zinc-900 rounded-[3rem] p-10 max-w-2xl w-full max-h-[90vh] shadow-2xl relative overflow-hidden flex flex-col border border-black/5 dark:border-white/5"
             >
               <button 
                 onClick={() => setViewingRecipe(null)} 
-                className="absolute top-8 right-8 p-3 bg-gray-50 rounded-full hover:bg-gray-100 transition-colors z-10"
+                className="absolute top-8 right-8 p-3 bg-gray-50 dark:bg-zinc-800 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors z-10 text-black dark:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
 
               <div className="flex-1 overflow-y-auto no-scrollbar space-y-8">
                 <div className="flex items-center gap-6">
-                  <div className="w-32 h-32 rounded-[2rem] overflow-hidden border border-black/5 shadow-lg shrink-0 bg-gray-50">
+                  <div className="w-32 h-32 rounded-[2rem] overflow-hidden border border-black/5 dark:border-white/5 shadow-lg shrink-0 bg-gray-50 dark:bg-zinc-800">
                     <img src={getRecipeImage(viewingRecipe.title, viewingRecipe.category?.toLowerCase() || 'lunch')} className="w-full h-full object-cover" alt={viewingRecipe.title} />
                   </div>
                   <div>
-                    <h2 className="text-4xl font-black italic serif leading-tight">{viewingRecipe.title}</h2>
-                    <span className="inline-block px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-widest mt-2">{viewingRecipe.category}</span>
+                    <h2 className="text-4xl font-black italic serif leading-tight text-black dark:text-white">{viewingRecipe.title}</h2>
+                    <span className="inline-block px-3 py-1 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-widest mt-2">{viewingRecipe.category}</span>
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                   <h4 className="text-sm font-bold uppercase tracking-widest text-gray-400 border-b border-black/5 pb-2">Ingredients & Stock</h4>
+                   <h4 className="text-sm font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 border-b border-black/5 dark:border-white/5 pb-2">Ingredients & Stock</h4>
                    <div className="grid grid-cols-1 gap-3">
                       {viewingRecipe.ingredients.map((ing: any, i: number) => {
                         const multiplier = (activePlan.servings || 2) / (viewingRecipe.servings || 2);
@@ -536,13 +536,13 @@ export default function MealPlanning({ user, profile }: { user: User, profile: a
                         const stock = pantryItems.find(p => p.name.toLowerCase() === ing.name.toLowerCase());
                         const hasStock = stock && stock.quantity >= scaledQty;
                         return (
-                          <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-black/5">
+                          <div key={i} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl border border-black/5 dark:border-white/5">
                             <div className="flex items-center gap-3">
                               <div className={cn("w-2 h-2 rounded-full", hasStock ? "bg-green-500" : "bg-orange-500")} />
-                              <span className="font-bold">{ing.name}</span>
+                              <span className="font-bold text-black dark:text-white">{ing.name}</span>
                             </div>
                             <div className="text-right">
-                              <p className="text-sm font-bold">{scaledQty} {ing.unit}</p>
+                              <p className="text-sm font-bold text-black dark:text-white">{scaledQty} {ing.unit}</p>
                               <p className={cn("text-[10px] font-bold uppercase", hasStock ? "text-green-500" : "text-orange-500")}>
                                 {hasStock ? "In Stock" : stock ? `Low: ${stock.quantity} left` : "Missing"}
                               </p>
@@ -555,14 +555,14 @@ export default function MealPlanning({ user, profile }: { user: User, profile: a
 
                 {viewingRecipe.instructions && (
                   <div className="space-y-4">
-                    <h4 className="text-sm font-bold uppercase tracking-widest text-gray-400 border-b border-black/5 pb-2">Instructions</h4>
-                    <p className="text-gray-600 leading-relaxed font-medium italic serif text-lg">{viewingRecipe.instructions}</p>
+                    <h4 className="text-sm font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 border-b border-black/5 dark:border-white/5 pb-2">Instructions</h4>
+                    <p className="text-gray-600 dark:text-gray-400 leading-relaxed font-medium italic serif text-lg">{viewingRecipe.instructions}</p>
                   </div>
                 )}
                 
                 <button 
                   onClick={() => setViewingRecipe(null)}
-                  className="w-full py-5 bg-black text-white rounded-2xl font-bold uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all text-sm"
+                  className="w-full py-5 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-bold uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all text-sm"
                 >
                   Close Details
                 </button>

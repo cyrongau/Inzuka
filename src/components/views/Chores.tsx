@@ -196,16 +196,16 @@ export default function Chores({ user, profile }: { user: User, profile: any }) 
       {/* Header & Flow Control */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
         <div className="space-y-1">
-          <h2 className="text-4xl font-light italic serif tracking-tight">Household <span className="font-bold not-italic">Entropy</span></h2>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Restoring order through iterative harmony</p>
+          <h2 className="text-4xl font-light italic serif tracking-tight text-black dark:text-white">Household <span className="font-bold not-italic">Entropy</span></h2>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Restoring order through iterative harmony</p>
         </div>
         
-        <div className="flex bg-black/5 p-1 rounded-2xl w-fit overflow-x-auto no-scrollbar">
+        <div className="flex bg-black/5 dark:bg-white/5 p-1 rounded-2xl w-fit overflow-x-auto no-scrollbar">
            <button 
             onClick={() => setActiveCategory('all')}
             className={cn(
               "px-6 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap",
-              activeCategory === 'all' ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-black"
+              activeCategory === 'all' ? "bg-black dark:bg-white text-white dark:text-black shadow-xl" : "text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white"
             )}
           >
             All Threads
@@ -216,7 +216,7 @@ export default function Chores({ user, profile }: { user: User, profile: any }) 
               onClick={() => setActiveCategory(cat.id)}
               className={cn(
                 "px-6 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap flex items-center gap-2",
-                activeCategory === cat.id ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-black"
+                activeCategory === cat.id ? "bg-black dark:bg-white text-white dark:text-black shadow-xl" : "text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white"
               )}
             >
               <cat.icon className="w-3.5 h-3.5" />
@@ -231,7 +231,7 @@ export default function Chores({ user, profile }: { user: User, profile: any }) 
         <div className="lg:col-span-4 space-y-8">
           <button 
             onClick={() => setShowAdd(!showAdd)}
-            className="w-full bg-black text-white p-8 rounded-[3rem] font-black text-sm uppercase tracking-[0.3em] flex items-center justify-center gap-4 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl"
+            className="w-full bg-black dark:bg-white text-white dark:text-black p-8 rounded-[3rem] font-black text-sm uppercase tracking-[0.3em] flex items-center justify-center gap-4 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl"
           >
             {showAdd ? <X className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
             {showAdd ? 'Abort Sequence' : 'Initialize Task'}
@@ -268,13 +268,13 @@ export default function Chores({ user, profile }: { user: User, profile: any }) 
 
         {/* Visibility Column */}
         <div className="lg:col-span-8 space-y-10">
-          <div className="bg-white rounded-[4rem] p-10 lg:p-14 border border-black/5 shadow-sm min-h-[600px]">
+          <div className="bg-white dark:bg-zinc-900 rounded-[4rem] p-10 lg:p-14 border border-black/5 dark:border-white/5 shadow-sm min-h-[600px]">
             <div className="flex items-center justify-between mb-12">
-              <h3 className="text-3xl font-bold tracking-tighter italic serif underline decoration-black/5 underline-offset-8">
+              <h3 className="text-3xl font-bold tracking-tighter italic serif underline decoration-black/5 dark:decoration-white/10 underline-offset-8 text-black dark:text-white">
                 {activeCategory === 'all' ? 'Thread Overview' : `${CATEGORIES.find(c => c.id === activeCategory)?.label} Domain`}
               </h3>
               <div className="flex items-center gap-2">
-                <span className="px-5 py-2 bg-black/5 text-gray-400 rounded-full text-[10px] font-black tracking-widest uppercase">
+                <span className="px-5 py-2 bg-black/5 dark:bg-white/5 text-gray-400 dark:text-gray-500 rounded-full text-[10px] font-black tracking-widest uppercase">
                   {pendingChores.length} Cycles Remaining
                 </span>
               </div>
@@ -305,10 +305,10 @@ export default function Chores({ user, profile }: { user: User, profile: any }) 
                 )}
 
                 {completedChores.length > 0 && (
-                  <div className="space-y-6 pt-10 border-t border-black/[0.03]">
+                  <div className="space-y-6 pt-10 border-t border-black/[0.03] dark:border-white/[0.05]">
                     <div className="flex items-center gap-4 px-6 mb-2">
-                       <span className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-300">Synchronized Archive</span>
-                       <div className="flex-1 h-px bg-black/[0.03]" />
+                       <span className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-300 dark:text-gray-600">Synchronized Archive</span>
+                       <div className="flex-1 h-px bg-black/[0.03] dark:bg-white/[0.05]" />
                     </div>
                     {completedChores.map((chore) => (
                       <TaskItem 

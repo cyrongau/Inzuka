@@ -212,21 +212,21 @@ export default function GrowthHub({ user, profile }: { user: User, profile: any 
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-black text-white rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-black dark:bg-white text-white dark:text-black rounded-xl flex items-center justify-center">
               <Zap className="w-5 h-5 fill-current" />
             </div>
-            <h1 className="text-3xl font-light italic serif tracking-tight">Growth Hub</h1>
+            <h1 className="text-3xl font-light italic serif tracking-tight text-black dark:text-white">Growth Hub</h1>
           </div>
-          <p className="text-gray-400 font-medium text-sm">Domestic excellence & cognitive development center.</p>
+          <p className="text-gray-400 dark:text-gray-500 font-medium text-sm">Domestic excellence & cognitive development center.</p>
         </div>
 
         {isParent && familyMembers.length > 0 && (
-          <div className="bg-white p-4 rounded-2xl border border-black/5 flex items-center gap-4">
-            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Target Child:</p>
+          <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-black/5 dark:border-white/5 flex items-center gap-4">
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Target Child:</p>
             <select 
               value={selectedChildId}
               onChange={(e) => setSelectedChildId(e.target.value)}
-              className="bg-gray-50 border-none text-xs font-bold rounded-lg px-4 py-2 outline-none focus:ring-1 focus:ring-black/10"
+              className="bg-gray-50 dark:bg-zinc-800 text-black dark:text-white border-none text-xs font-bold rounded-lg px-4 py-2 outline-none focus:ring-1 focus:ring-black/10 dark:focus:ring-white/10"
             >
               {familyMembers.map(child => (
                 <option key={child.id} value={child.id}>{child.displayName} (Age: {child.age || '?'})</option>
@@ -235,7 +235,7 @@ export default function GrowthHub({ user, profile }: { user: User, profile: any 
           </div>
         )}
 
-        <div className="flex items-center gap-1 bg-white p-1.5 rounded-2xl border border-black/5 shadow-sm">
+        <div className="flex items-center gap-1 bg-white dark:bg-zinc-900 p-1.5 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm">
           {[
             { id: 'wellness', label: 'Wellness & Habits', icon: Activity },
             { id: 'education', label: 'Academic Center', icon: GraduationCap },
@@ -246,7 +246,7 @@ export default function GrowthHub({ user, profile }: { user: User, profile: any 
               onClick={() => setActiveView(tab.id as any)}
               className={cn(
                 "flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
-                activeView === tab.id ? "bg-black text-white shadow-lg" : "text-gray-400 hover:text-black hover:bg-black/5"
+                activeView === tab.id ? "bg-black dark:bg-white text-white dark:text-black shadow-lg" : "text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5"
               )}
             >
               <tab.icon className="w-4 h-4" />
@@ -284,32 +284,32 @@ export default function GrowthHub({ user, profile }: { user: User, profile: any 
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
-                      className="bg-white p-8 rounded-[2rem] border border-black/5 shadow-inner space-y-4 overflow-hidden"
+                      className="bg-white dark:bg-zinc-900 p-8 rounded-[2rem] border border-black/5 dark:border-white/5 shadow-inner space-y-4 overflow-hidden"
                     >
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <input 
                           placeholder="Goal Name (e.g. 10 Mile Walk)"
                           value={goalName}
                           onChange={e => setGoalName(e.target.value)}
-                          className="bg-gray-50 p-4 rounded-xl text-sm font-bold border-none focus:ring-1 focus:ring-black/10"
+                          className="bg-gray-50 dark:bg-zinc-800 text-black dark:text-white p-4 rounded-xl text-sm font-bold border-none focus:ring-1 focus:ring-black/10 dark:focus:ring-white/10"
                         />
                         <input 
                           type="number"
                           placeholder="Target Value"
                           value={goalTarget}
                           onChange={e => setGoalTarget(Number(e.target.value))}
-                          className="bg-gray-50 p-4 rounded-xl text-sm font-bold border-none focus:ring-1 focus:ring-black/10"
+                          className="bg-gray-50 dark:bg-zinc-800 text-black dark:text-white p-4 rounded-xl text-sm font-bold border-none focus:ring-1 focus:ring-black/10 dark:focus:ring-white/10"
                         />
                         <input 
                           placeholder="Unit (Miles, Chapters, etc)"
                           value={goalUnit}
                           onChange={e => setGoalUnit(e.target.value)}
-                          className="bg-gray-50 p-4 rounded-xl text-sm font-bold border-none focus:ring-1 focus:ring-black/10"
+                          className="bg-gray-50 dark:bg-zinc-800 text-black dark:text-white p-4 rounded-xl text-sm font-bold border-none focus:ring-1 focus:ring-black/10 dark:focus:ring-white/10"
                         />
                       </div>
                       <button 
                         onClick={createGoal}
-                        className="w-full bg-black text-white py-4 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-[1.01] active:scale-95 transition-all"
+                        className="w-full bg-black dark:bg-white text-white dark:text-black py-4 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-[1.01] active:scale-95 transition-all"
                       >
                         Launch Milestone Track
                       </button>
@@ -323,10 +323,10 @@ export default function GrowthHub({ user, profile }: { user: User, profile: any 
                     const isOverDaily = (habit.currentValue || 0) >= dailyTarget;
 
                     return (
-                      <div key={habit.id} className="bg-white p-6 rounded-[2rem] border border-black/5 shadow-sm hover:shadow-md transition-all">
+                      <div key={habit.id} className="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] border border-black/5 dark:border-white/5 shadow-sm hover:shadow-md transition-all">
                         <div className="flex items-center justify-between mb-4">
-                          <div className="w-10 h-10 bg-black/5 rounded-xl flex items-center justify-center">
-                            <Flame className={cn("w-5 h-5", isOverDaily ? "text-orange-500" : "text-gray-300")} />
+                          <div className="w-10 h-10 bg-black/5 dark:bg-white/5 rounded-xl flex items-center justify-center">
+                            <Flame className={cn("w-5 h-5", isOverDaily ? "text-orange-500" : "text-gray-300 dark:text-gray-600")} />
                           </div>
                           <div className="flex flex-col items-end">
                             <div className="flex items-center gap-1 text-[10px] font-black tracking-widest text-orange-500 uppercase">
@@ -338,18 +338,18 @@ export default function GrowthHub({ user, profile }: { user: User, profile: any 
                             </span>
                           </div>
                         </div>
-                        <h4 className="text-lg font-bold mb-1">{habit.name}</h4>
+                        <h4 className="text-lg font-bold mb-1 text-black dark:text-white">{habit.name}</h4>
                         
                         <div className="space-y-3 mt-4">
                           <div className="flex items-center justify-between text-xs font-black">
                             <span className="text-gray-400">Progression</span>
-                            <span>{habit.currentValue || 0} / {habit.targetValue} {habit.unit}</span>
+                            <span className="text-black dark:text-white">{habit.currentValue || 0} / {habit.targetValue} {habit.unit}</span>
                           </div>
-                          <div className="h-4 bg-gray-100 rounded-full overflow-hidden border border-black/5 p-0.5">
+                          <div className="h-4 bg-gray-100 dark:bg-zinc-800 rounded-full overflow-hidden border border-black/5 dark:border-white/5 p-0.5">
                             <motion.div 
                               initial={{ width: 0 }}
                               animate={{ width: `${Math.min(100, ((habit.currentValue || 0) / (habit.targetValue || 1)) * 100)}%` }}
-                              className="h-full bg-black rounded-full shadow-lg shadow-black/20"
+                              className="h-full bg-black dark:bg-white rounded-full shadow-lg shadow-black/20"
                             />
                           </div>
                           
@@ -360,7 +360,7 @@ export default function GrowthHub({ user, profile }: { user: User, profile: any 
                                 key={i} 
                                 className={cn(
                                   "rounded-sm",
-                                  (habit.currentValue || 0) >= (dailyTarget * (i + 1)) ? "bg-green-400" : "bg-gray-100"
+                                  (habit.currentValue || 0) >= (dailyTarget * (i + 1)) ? "bg-green-400" : "bg-gray-100 dark:bg-zinc-800"
                                 )} 
                               />
                             ))}
@@ -371,7 +371,7 @@ export default function GrowthHub({ user, profile }: { user: User, profile: any 
                               <button 
                                 key={inc}
                                 onClick={() => updateHabitProgress(habit.id, inc)}
-                                className="flex-1 py-3 bg-gray-50 border border-black/5 rounded-2xl text-[10px] font-black uppercase hover:bg-black hover:text-white transition-all active:scale-95"
+                                className="flex-1 py-3 bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 rounded-2xl text-[10px] font-black uppercase text-black dark:text-white hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black transition-all active:scale-95"
                               >
                                 +{inc}
                               </button>
@@ -439,7 +439,7 @@ export default function GrowthHub({ user, profile }: { user: User, profile: any 
                       }}
                       disabled={isGenerating}
                       className={cn(
-                        "flex flex-col items-center gap-3 p-6 bg-white rounded-3xl border border-black/5 hover:border-black/20 hover:shadow-lg transition-all group",
+                        "flex flex-col items-center gap-3 p-6 bg-white dark:bg-zinc-900 rounded-3xl border border-black/5 dark:border-white/5 hover:border-black/20 dark:hover:border-white/20 hover:shadow-lg transition-all group",
                         !isParent && "opacity-50 cursor-not-allowed"
                       )}
                     >
@@ -629,7 +629,7 @@ export default function GrowthHub({ user, profile }: { user: User, profile: any 
           )}
 
           {/* User Rankings */}
-          <div className="bg-white p-8 rounded-[2.5rem] border border-black/5 shadow-sm">
+          <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-black/5 dark:border-white/5 shadow-sm">
              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 mb-6">Family Rankings</h3>
              <div className="space-y-5">
                {[
@@ -641,11 +641,11 @@ export default function GrowthHub({ user, profile }: { user: User, profile: any 
                    <div className="flex items-center gap-3">
                      <div className={cn(
                        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-black",
-                       rank.rank === 1 ? "bg-yellow-100 text-yellow-600" : "bg-gray-100 text-gray-400"
+                       rank.rank === 1 ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-500" : "bg-gray-100 dark:bg-zinc-800 text-gray-400 dark:text-gray-500"
                      )}>
                        {rank.rank}
                      </div>
-                     <span className="font-bold text-sm">{rank.name}</span>
+                     <span className="font-bold text-sm text-black dark:text-white">{rank.name}</span>
                    </div>
                    <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">{rank.points} XP</span>
                  </div>

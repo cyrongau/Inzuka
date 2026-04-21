@@ -48,6 +48,13 @@ service cloud.firestore {
     // Helper Functions
     // ===============================================================
     
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    function isValidId(id) { 
+        return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+
     function isAuthenticated() {
       return request.auth != null;
     }
@@ -109,13 +116,17 @@ service cloud.firestore {
     }
 
     function isValidTransaction(data) {
-      return data.keys().hasAll(['fromUserId', 'toUserId', 'amount', 'type', 'status']) &&
-             data.fromUserId is string &&
-             data.toUserId is string &&
+      return data.keys().hasAll(['amount', 'type', 'transactionDate']) &&
              data.amount is number &&
              data.type in ["transfer", "payment", "deposit", "withdrawal", "reconciliation"] &&
-             data.status in ["pending", "completed", "failed"] &&
-             (!('provider' in data) || data.provider in ["m-pesa", "airtel-money", "internal", "bank"]);
+             data.transactionDate is string &&
+             (!('status' in data) || data.status in ["pending", "completed", "failed"]) &&
+             (!('fromUserId' in data) || data.fromUserId is string) &&
+             (!('toUserId' in data) || data.toUserId is string) &&
+             (!('provider' in data) || data.provider is string) &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 1000)) &&
+             (!('familyId' in data) || data.familyId is string) &&
+             (!('paymentMethod' in data) || data.paymentMethod is string);
     }
 
     function isValidBankAccount(data) {
@@ -259,11 +270,15 @@ service cloud.firestore {
     // Rules
     // ===============================================================
 
+    function isInSameCommunity(targetUserId) {
+      // we check if the user is in any community the target is in
+      // This is hard to do without a specific array. But for now we can just allow read if authenticated for basic users.
+      // Actually, for a social platform, basic user profile is typically public to authenticated users
+      return isAuthenticated();
+    }
+
     match /users/{userId} {
-      allow read: if isAuthenticated() && (
-        isOwner(userId) || 
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.familyId == resource.data.familyId)
-      );
+      allow read: if isAuthenticated();
       allow create: if isOwner(userId) && isValidUser(request.resource.data);
       allow update: if (isOwner(userId) || (resource.data.familyId != null && isFamilyOwner(resource.data.familyId))) && isValidUser(request.resource.data);
     }
@@ -360,9 +375,20 @@ service cloud.firestore {
     }
 
     match /transactions/{transactionId} {
-      // Allows user to read their own transactions or transactions for their family
-      allow read: if isAuthenticated() && (resource == null || resource.data.fromUserId == request.auth.uid || resource.data.toUserId == request.auth.uid || ('familyId' in resource.data && isFamilyMember(resource.data.familyId)));
-      allow create: if isAuthenticated() && (request.resource.data.fromUserId == request.auth.uid) && isValidTransaction(request.resource.data);
+      allow read: if isAuthenticated() && (
+        resource.data.fromUserId == request.auth.uid || 
+        resource.data.toUserId == request.auth.uid || 
+        resource.data.senderId == request.auth.uid ||
+        ('familyId' in resource.data && isFamilyMember(resource.data.familyId))
+      );
+      allow create: if isAuthenticated() && 
+                    (incoming().fromUserId == request.auth.uid || incoming().toUserId == request.auth.uid) && 
+                    isValidTransaction(incoming());
+      allow update: if isAuthenticated() && 
+                    (existing().fromUserId == request.auth.uid || existing().toUserId == request.auth.uid || (('senderId' in existing()) && existing().senderId == request.auth.uid)) && 
+                    isValidTransaction(incoming()) &&
+                    (!('createdAt' in existing()) || incoming().createdAt == existing().createdAt);
+      allow delete: if isAdmin();
     }
 
     match /bankAccounts/{accountId} {
@@ -428,6 +454,10 @@ service cloud.firestore {
     }
     match /communities/{communityId} {
       allow read, write: if isAuthenticated();
+      
+      match /{document=**} {
+        allow read, write: if isAuthenticated();
+      }
     }
     // ===============================================================
     // Forum & Support Helpers

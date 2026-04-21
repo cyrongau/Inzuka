@@ -50,8 +50,8 @@ export const ExpenseManager: React.FC<ExpenseManagerProps> = ({
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
       {/* Logger Column */}
       <div className="lg:col-span-4 space-y-6">
-        <div className="bg-white p-8 rounded-[2.5rem] border border-black/5 shadow-sm">
-          <h3 className="text-xl font-bold mb-8 flex items-center gap-2 italic serif">
+        <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-black/5 dark:border-white/5 shadow-sm">
+          <h3 className="text-xl font-bold mb-8 flex items-center gap-2 italic serif text-black dark:text-white">
             <Receipt className="w-5 h-5" /> Quick Record
           </h3>
           <div className="space-y-6">
@@ -63,8 +63,8 @@ export const ExpenseManager: React.FC<ExpenseManagerProps> = ({
                   className={cn(
                     "flex flex-col items-center justify-center p-3 rounded-2xl border transition-all gap-1.5",
                     selectedCategory === cat.id 
-                      ? "border-black bg-black text-white shadow-lg scale-105" 
-                      : "border-black/5 bg-gray-50 text-gray-400 hover:border-black/20"
+                      ? "border-black dark:border-white bg-black dark:bg-white text-white dark:text-black shadow-lg scale-105" 
+                      : "border-black/5 dark:border-white/5 bg-gray-50 dark:bg-zinc-800 text-gray-400 hover:border-black/20 dark:hover:border-white/20"
                   )}
                 >
                   <cat.icon className="w-4 h-4" />
@@ -81,18 +81,18 @@ export const ExpenseManager: React.FC<ExpenseManagerProps> = ({
                   placeholder="0.00" 
                   value={amount}
                   onChange={e => setAmount(e.target.value)}
-                  className="w-full bg-gray-50 border border-black/5 rounded-2xl p-5 pl-16 text-2xl font-black focus:outline-none focus:ring-2 focus:ring-black/10 transition-all"
+                  className="w-full bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 rounded-2xl p-5 pl-16 text-2xl font-black focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 transition-all text-black dark:text-white"
                 />
               </div>
               <textarea 
                 placeholder="What was this for?" 
                 value={description}
                 onChange={e => setDescription(e.target.value)}
-                className="w-full bg-gray-50 border border-black/5 rounded-2xl p-5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-black/10 transition-all min-h-[100px]"
+                className="w-full bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 rounded-2xl p-5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 transition-all min-h-[100px] text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600"
               />
               <button 
                 onClick={handleAddExpense}
-                className="w-full bg-black text-white py-5 rounded-2xl font-bold text-sm tracking-widest uppercase hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl hover:shadow-black/20"
+                className="w-full bg-black dark:bg-white text-white dark:text-black py-5 rounded-2xl font-bold text-sm tracking-widest uppercase hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl hover:shadow-black/20"
               >
                 Sync with Ledger
               </button>
@@ -102,10 +102,10 @@ export const ExpenseManager: React.FC<ExpenseManagerProps> = ({
       </div>
 
       {/* Ledger Column */}
-      <div className="lg:col-span-8 bg-white p-10 rounded-[3rem] border border-black/5 shadow-sm">
+      <div className="lg:col-span-8 bg-white dark:bg-zinc-900 p-10 rounded-[3rem] border border-black/5 dark:border-white/5 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-          <h3 className="text-2xl font-bold tracking-tight italic serif">Recent Activity</h3>
-          <div className="flex bg-black/5 rounded-2xl p-1 border border-black/5">
+          <h3 className="text-2xl font-bold tracking-tight italic serif text-black dark:text-white">Recent Activity</h3>
+          <div className="flex bg-black/5 dark:bg-white/5 rounded-2xl p-1 border border-black/5 dark:border-white/5">
             {[
               { id: 'all', label: 'All' },
               { id: 'paid', label: 'Settled' },
@@ -116,7 +116,7 @@ export const ExpenseManager: React.FC<ExpenseManagerProps> = ({
                 onClick={() => setFilter(f.id as any)}
                 className={cn(
                   "px-6 py-2 text-[10px] font-bold uppercase tracking-widest rounded-xl transition-all",
-                  filter === f.id ? "bg-white shadow-sm text-black" : "text-gray-400 hover:text-black"
+                  filter === f.id ? "bg-white dark:bg-zinc-800 shadow-sm text-black dark:text-white" : "text-gray-400 hover:text-black dark:hover:text-white"
                 )}
               >
                 {f.label}
@@ -136,34 +136,34 @@ export const ExpenseManager: React.FC<ExpenseManagerProps> = ({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   key={expense.id} 
-                  className="flex items-center justify-between p-6 rounded-3xl border border-black/[0.03] hover:bg-gray-50 hover:border-black/5 transition-all group"
+                  className="flex items-center justify-between p-6 rounded-3xl border border-black/[0.03] dark:border-white/[0.03] hover:bg-gray-50 dark:hover:bg-white/5 hover:border-black/5 dark:hover:border-white/5 transition-all group"
                 >
                   <div className="flex items-center gap-6">
-                    <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center bg-white shadow-sm border border-black/[0.05]", cat.color)}>
+                    <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center bg-white dark:bg-zinc-800 shadow-sm border border-black/[0.05] dark:border-white/[0.05]", cat.color)}>
                       <cat.icon className="w-7 h-7" />
                     </div>
                     <div>
-                        <p className="font-bold text-lg text-black">{expense.description || cat.label}</p>
+                        <p className="font-bold text-lg text-black dark:text-white">{expense.description || cat.label}</p>
                         <div className="flex items-center gap-2">
                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{cat.label}</span>
-                           <span className="w-1 h-1 bg-gray-200 rounded-full" />
+                           <span className="w-1 h-1 bg-gray-200 dark:bg-zinc-800 rounded-full" />
                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{format(new Date(expense.date), 'MMM dd, yyyy')}</span>
                         </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-8">
                     <div className="text-right">
-                        <p className="text-xl font-black">KES {expense.amount.toLocaleString()}</p>
+                        <p className="text-xl font-black text-black dark:text-white">KES {expense.amount.toLocaleString()}</p>
                         <div className="flex items-center justify-end gap-2 mt-1">
-                          <CheckCircle2 className={cn("w-3 h-3", expense.isPaid ? "text-green-500" : "text-gray-200")} />
-                          <span className={cn("text-[9px] font-black uppercase tracking-[0.1em]", expense.isPaid ? "text-green-600/50" : "text-gray-300")}>
+                          <CheckCircle2 className={cn("w-3 h-3", expense.isPaid ? "text-green-500" : "text-gray-200 dark:text-zinc-800")} />
+                          <span className={cn("text-[9px] font-black uppercase tracking-[0.1em]", expense.isPaid ? "text-green-600/50" : "text-gray-300 dark:text-gray-600")}>
                             {expense.isPaid ? 'Settled' : 'Unpaid'}
                           </span>
                         </div>
                     </div>
                     <button 
                       onClick={() => deleteDoc(doc(db, 'expenses', expense.id))}
-                      className="opacity-0 group-hover:opacity-100 p-2 text-gray-300 hover:text-red-500 transition-all hover:bg-red-50 rounded-xl"
+                      className="opacity-0 group-hover:opacity-100 p-2 text-gray-300 hover:text-red-500 transition-all hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -173,7 +173,7 @@ export const ExpenseManager: React.FC<ExpenseManagerProps> = ({
             })}
           </AnimatePresence>
           {filteredExpenses.length === 0 && (
-            <div className="text-center py-20 bg-gray-50/50 rounded-[3rem] border border-dashed border-black/5">
+            <div className="text-center py-20 bg-gray-50/50 dark:bg-white/5 rounded-[3rem] border border-dashed border-black/5 dark:border-white/5">
               <p className="text-xs font-bold text-gray-300 uppercase tracking-widest italic serif">No records found in this cycle</p>
             </div>
           )}

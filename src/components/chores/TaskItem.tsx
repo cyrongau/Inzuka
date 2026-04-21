@@ -29,8 +29,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({
     <div className={cn(
       "rounded-[2.5rem] border transition-all overflow-hidden group",
       chore.completed 
-        ? "bg-gray-50 border-black/[0.02] opacity-60 shadow-inner" 
-        : "bg-white border-black/[0.05] hover:border-black/10 hover:shadow-xl"
+        ? "bg-gray-50 dark:bg-zinc-900 border-black/[0.02] dark:border-white/[0.02] opacity-60 shadow-inner" 
+        : "bg-white dark:bg-zinc-900 border-black/[0.05] dark:border-white/[0.05] hover:border-black/10 dark:hover:border-white/10 hover:shadow-xl"
     )}>
       <div className="flex items-center justify-between p-6">
         <div className="flex items-center gap-6 flex-1">
@@ -39,8 +39,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({
             className={cn(
               "w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-sm",
               chore.completed 
-                ? "bg-black text-white" 
-                : "bg-gray-50 text-gray-200 hover:bg-black hover:text-white"
+                ? "bg-black dark:bg-white text-white dark:text-black" 
+                : "bg-gray-50 dark:bg-zinc-800 text-gray-200 dark:text-gray-600 hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black"
             )}
           >
             {chore.completed ? <CheckCircle2 className="w-8 h-8" /> : <Circle className="w-8 h-8" />}
@@ -48,13 +48,13 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           <div className="cursor-pointer flex-1" onClick={() => setIsExpanded(!isExpanded)}>
             <div className="flex items-center gap-2">
               <h4 className={cn(
-                "font-black text-xl tracking-tight italic serif",
-                chore.completed && "line-through text-gray-400"
+                "font-black text-xl tracking-tight italic serif text-black dark:text-white",
+                chore.completed && "line-through text-gray-400 dark:text-gray-500"
               )}>
                 {chore.title}
               </h4>
               {chore.checkList?.length > 0 && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/5 text-[9px] text-gray-400 font-black uppercase tracking-widest">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/5 dark:bg-white/5 text-[9px] text-gray-400 dark:text-gray-500 font-black uppercase tracking-widest">
                   <ListTodo className="w-2.5 h-2.5" />
                   {chore.checkList.filter((i:any) => i.completed).length}/{chore.checkList.length}
                 </span>
@@ -64,16 +64,16 @@ export const TaskItem: React.FC<TaskItemProps> = ({
               <div className={cn("flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.15em]", cat.color)}>
                 <cat.icon className="w-3.5 h-3.5" /> {cat.label}
               </div>
-              <span className="w-1 h-1 bg-black/5 rounded-full" />
-              <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-gray-400">
+              <span className="w-1 h-1 bg-black/5 dark:bg-white/5 rounded-full" />
+              <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
                 <UserIcon className="w-3.5 h-3.5" /> {chore.assignedTo}
               </div>
               {chore.dueDate && (
                 <>
-                  <span className="w-1 h-1 bg-black/5 rounded-full" />
+                  <span className="w-1 h-1 bg-black/5 dark:bg-white/5 rounded-full" />
                   <div className={cn(
                     "flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest",
-                    isOverdue ? "text-red-500" : "text-gray-400"
+                    isOverdue ? "text-red-500" : "text-gray-400 dark:text-gray-500"
                   )}>
                     <Clock className="w-3.5 h-3.5" /> {format(new Date(chore.dueDate), 'MMM d')} at {chore.dueTime || '--:--'}
                   </div>
@@ -85,13 +85,13 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         <div className="flex items-center gap-2 px-2">
           <button 
             onClick={() => setIsExpanded(!isExpanded)} 
-            className="p-3 text-gray-300 hover:text-black transition-colors"
+            className="p-3 text-gray-300 dark:text-gray-600 hover:text-black dark:hover:text-white transition-colors"
           >
             <ChevronDown className={cn("w-6 h-6 transition-transform duration-500", isExpanded && "rotate-180")} />
           </button>
           <button 
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            className="p-3 text-gray-200 hover:text-red-500 hover:bg-red-50 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+            className="p-3 text-gray-200 dark:text-gray-700 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
           >
             <Trash2 className="w-5 h-5" />
           </button>

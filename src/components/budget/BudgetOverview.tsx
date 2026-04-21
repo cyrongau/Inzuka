@@ -47,42 +47,42 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
-            className="bg-white p-8 rounded-[2.5rem] border border-black/5 shadow-sm hover:shadow-xl transition-all"
+            className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-black/5 dark:border-white/5 shadow-sm hover:shadow-xl transition-all"
           >
-            <div className={cn("inline-flex p-3 rounded-2xl bg-gray-50 mb-4", stat.color)}>
+            <div className={cn("inline-flex p-3 rounded-2xl bg-gray-50 dark:bg-zinc-800 mb-4", stat.color, stat.label === 'Total Balance' && 'dark:text-white')}>
               <stat.icon className="w-5 h-5" />
             </div>
-            <p className="text-sm font-medium text-gray-400 uppercase tracking-widest">{stat.label}</p>
-            <h2 className="text-3xl font-bold tracking-tight mt-1">KES {stat.value.toLocaleString()}</h2>
+            <p className="text-sm font-medium text-gray-400 dark:text-gray-500 uppercase tracking-widest">{stat.label}</p>
+            <h2 className="text-3xl font-bold tracking-tight mt-1 text-black dark:text-white">KES {stat.value.toLocaleString()}</h2>
           </motion.div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white p-10 rounded-[3rem] border border-black/5 shadow-sm">
-          <h3 className="text-2xl font-bold tracking-tight mb-8 italic serif">Financial Health Flow</h3>
+        <div className="bg-white dark:bg-zinc-900 p-10 rounded-[3rem] border border-black/5 dark:border-white/5 shadow-sm">
+          <h3 className="text-2xl font-bold tracking-tight mb-8 italic serif text-black dark:text-white">Financial Health Flow</h3>
           <div className="h-64 flex items-end gap-2 px-2">
             {Array.from({ length: 12 }).map((_, i) => {
               const height = (Math.sin(i / 2) + 2) * 20; // Simulated data
               return (
                 <div key={i} className="flex-1 flex flex-col justify-end gap-1 group relative">
                   <div 
-                    className="bg-black/5 w-full rounded-t-lg transition-all group-hover:bg-black/10"
+                    className="bg-black/5 dark:bg-white/10 w-full rounded-t-lg transition-all group-hover:bg-black/10 dark:group-hover:bg-white/20"
                     style={{ height: `${height * 1.5}%` }}
                   ></div>
                   <div 
-                    className="bg-green-100 w-full rounded-t-lg group-hover:bg-green-200 transition-all"
+                    className="bg-green-100 dark:bg-green-900/40 w-full rounded-t-lg group-hover:bg-green-200 dark:group-hover:bg-green-900/60 transition-all"
                     style={{ height: `${height * 0.5}%` }}
                   ></div>
-                  <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] font-bold text-gray-400">MAY {i+1}</div>
+                  <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] font-bold text-gray-400 dark:text-gray-500">MAY {i+1}</div>
                 </div>
               );
             })}
           </div>
         </div>
 
-        <div className="bg-white p-10 rounded-[3rem] border border-black/5 shadow-sm">
-          <h4 className="text-sm font-bold uppercase tracking-widest text-gray-400 mb-8 flex items-center gap-2 italic serif">
+        <div className="bg-white dark:bg-zinc-900 p-10 rounded-[3rem] border border-black/5 dark:border-white/5 shadow-sm">
+          <h4 className="text-sm font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-8 flex items-center gap-2 italic serif">
             <Receipt className="w-4 h-4" /> Expense Distribution
           </h4>
           <div className="space-y-6">
@@ -92,12 +92,12 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
               return (
                 <div key={cat.id} className="space-y-2">
                   <div className="flex justify-between text-[11px] font-bold uppercase tracking-tighter">
-                    <span className="flex items-center gap-2 truncate text-gray-600">
+                    <span className="flex items-center gap-2 truncate text-gray-600 dark:text-gray-400">
                       <cat.icon className={cn("w-3.5 h-3.5", cat.color)} /> {cat.label}
                     </span>
-                    <span className="text-black">KES {catTotal.toLocaleString()} ({Math.round(percent)}%)</span>
+                    <span className="text-black dark:text-white">KES {catTotal.toLocaleString()} ({Math.round(percent)}%)</span>
                   </div>
-                  <div className="h-2 w-full bg-gray-50 rounded-full overflow-hidden">
+                  <div className="h-2 w-full bg-gray-50 dark:bg-zinc-800 rounded-full overflow-hidden">
                     <motion.div 
                       initial={{ width: 0 }}
                       animate={{ width: `${percent}%` }}

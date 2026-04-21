@@ -46,7 +46,16 @@ export async function scanReceipt(base64Image: string, mimeType: string): Promis
 }
 
 export async function parseTransactionText(text: string): Promise<ExtractedReceiptData> {
-  const prompt = `You are a financial NLP expert parsing transaction SMS or raw text (e.g., M-Pesa). Extract data: "${text}"`;
+  const prompt = `You are a financial NLP expert parsing transaction SMS or raw text (e.g., M-Pesa, Bank logs). 
+  Analyze the text: "${text}"
+  
+  CRITICAL INSTRUCTIONS:
+  1. Determine if this is a "deposit" (income/received funds), "payment" (expense/sent funds), or "withdrawal".
+     - Keywords like "received", "deposited", "remittance", "inward" typically mean "deposit".
+     - Keywords like "paid", "sent", "withdrawn", "buy goods" typically mean "payment" or "withdrawal".
+  2. Extract the amount, date, and the other party (merchant or person).
+  3. Categorize into: 'rent', 'school_fees', 'utility', 'medical', 'insurance', 'emergency', 'misc', 'transport', 'business', 'food', 'shopping'.
+  4. Accuracy is vital. If unsure, default to 'misc' category and 'payment' type.`;
 
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",

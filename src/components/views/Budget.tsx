@@ -106,11 +106,11 @@ export default function Budget({ user, profile }: { user: User, profile: any }) 
       {/* Header with AI Scanner Trigger */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
-          <h2 className="text-4xl font-light italic serif tracking-tight">Family <span className="font-bold not-italic">Capital</span></h2>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Holistic financial resilience & flow</p>
+          <h2 className="text-4xl font-light italic serif tracking-tight text-black dark:text-white">Family <span className="font-bold not-italic">Capital</span></h2>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Holistic financial resilience & flow</p>
         </div>
         
-        <div className="flex bg-black/5 p-1 rounded-2xl w-fit">
+        <div className="flex bg-black/5 dark:bg-white/5 p-1 rounded-2xl w-fit">
            {FINANCE_TABS.map((tab) => (
             <button
               key={tab.id}
@@ -118,8 +118,8 @@ export default function Budget({ user, profile }: { user: User, profile: any }) 
               className={cn(
                 "flex items-center gap-3 px-6 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all whitespace-nowrap",
                 activeTab === tab.id 
-                  ? "bg-black text-white shadow-xl" 
-                  : "text-gray-400 hover:text-black"
+                  ? "bg-black dark:bg-white text-white dark:text-black shadow-xl" 
+                  : "text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white"
               )}
             >
               <tab.icon className="w-3.5 h-3.5" />
@@ -188,17 +188,17 @@ export default function Budget({ user, profile }: { user: User, profile: any }) 
               <QuickPay userId={user.uid} />
             )}
             
-            <div className="bg-white p-8 rounded-[2.5rem] border border-black/5 shadow-sm space-y-6">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Capital Protection</h4>
+            <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-black/5 dark:border-white/5 shadow-sm space-y-6">
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Capital Protection</h4>
               <div className="space-y-4">
-                <div className="flex items-center gap-4 p-5 bg-green-50 rounded-3xl border border-green-100/50">
-                  <ShieldCheck className="w-6 h-6 text-green-600" />
+                <div className="flex items-center gap-4 p-5 bg-green-50 dark:bg-green-900/10 rounded-3xl border border-green-100/50 dark:border-green-900/30">
+                  <ShieldCheck className="w-6 h-6 text-green-600 dark:text-green-500" />
                   <div>
-                    <p className="text-xs font-bold text-green-900">Encrypted Nodes</p>
-                    <p className="text-[9px] text-green-700/60 font-medium uppercase tracking-tighter">End-to-end security active</p>
+                    <p className="text-xs font-bold text-green-900 dark:text-green-400">Encrypted Nodes</p>
+                    <p className="text-[9px] text-green-700/60 dark:text-green-500/60 font-medium uppercase tracking-tighter">End-to-end security active</p>
                   </div>
                 </div>
-                <p className="text-xs italic font-medium text-gray-500 leading-relaxed px-2">
+                <p className="text-xs italic font-medium text-gray-500 dark:text-gray-600 leading-relaxed px-2">
                   "Sustainable wealth isn't just about income; it's about the resilience of your family nodes."
                 </p>
               </div>

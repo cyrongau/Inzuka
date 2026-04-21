@@ -42,8 +42,8 @@ interface ForumThread {
 }
 
 const FEATURED_THREADS: Record<string, any> = {
-  'table-banking-guide': {
-    id: 'table-banking-guide',
+  'chama-guide': {
+    id: 'chama-guide',
     title: 'Mastering Communal Wealth: A Guide to Table Banking 2026',
     content: 'Table Banking is the backbone of communal growth in Kenya. In this comprehensive guide, we explore how to structure your Chama for maximum yield while ensuring 100% transparency.\n\n### Topics covered include:\n\n* **Distribution of Dividends**: How to calculate returns fairly.\n* **Fine Structures**: Managing late payments without friction.\n* **Emergency Loan Management**: Setting up liquidity buffers.\n* **Digital Record Keeping**: Leveraging the Inzuka platform for trust.',
     category: 'Governance Models',
@@ -306,14 +306,14 @@ export default function HubForums({ user, initialThreadId }: { user: User, initi
       <div className="space-y-8 animate-in slide-in-from-right duration-500 pb-20">
         <button 
           onClick={() => setSelectedThread(null)}
-          className="flex items-center gap-2 text-gray-400 hover:text-black transition-colors font-bold uppercase text-[10px] tracking-widest"
+          className="flex items-center gap-2 text-gray-400 hover:text-black dark:text-gray-500 dark:hover:text-white transition-colors font-bold uppercase text-[10px] tracking-widest"
         >
           <ChevronLeft className="w-4 h-4" /> Back to Agora
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
-            <div className="bg-white rounded-[3rem] p-0 border border-black/5 shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-zinc-900 rounded-[3rem] p-0 border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
                {selectedThread.featuredImage && (
                  <div className="w-full h-80 overflow-hidden relative group">
                     <img 
@@ -328,7 +328,7 @@ export default function HubForums({ user, initialThreadId }: { user: User, initi
                <div className="p-10 space-y-6">
                   <div className="flex justify-between items-start">
                     <div className="flex gap-2">
-                      <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[8px] font-black uppercase tracking-widest border border-blue-100">
+                      <span className="px-3 py-1 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full text-[8px] font-black uppercase tracking-widest border border-blue-100 dark:border-blue-500/20">
                         {selectedThread.category}
                       </span>
                     </div>
@@ -339,7 +339,7 @@ export default function HubForums({ user, initialThreadId }: { user: User, initi
                           setEditTitle(selectedThread.title);
                           setEditContent(selectedThread.content);
                         }}
-                        className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-black transition-colors"
+                        className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors"
                       >
                         Edit Article
                       </button>
@@ -351,26 +351,26 @@ export default function HubForums({ user, initialThreadId }: { user: User, initi
                       <input 
                         value={editTitle}
                         onChange={(e) => setEditTitle(e.target.value)}
-                        className="w-full text-3xl font-black italic serif bg-gray-50 p-4 rounded-2xl border border-black/5 focus:outline-none focus:ring-2 focus:ring-black/5"
+                        className="w-full text-3xl font-black italic serif bg-gray-50 dark:bg-zinc-800 p-4 rounded-2xl border border-black/5 dark:border-white/5 focus:outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 text-black dark:text-white"
                         placeholder="Article Title"
                       />
                       <textarea 
                         value={editContent}
                         onChange={(e) => setEditContent(e.target.value)}
-                        className="w-full h-80 bg-gray-50 p-6 rounded-3xl border border-black/5 focus:outline-none focus:ring-2 focus:ring-black/5 text-lg leading-relaxed font-light text-gray-600 resize-none"
+                        className="w-full h-80 bg-gray-50 dark:bg-zinc-800 p-6 rounded-3xl border border-black/5 dark:border-white/5 focus:outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 text-lg leading-relaxed font-light text-gray-600 dark:text-gray-300 resize-none text-black dark:text-white"
                         placeholder="Write your update..."
                       />
                       <div className="flex gap-4">
                         <button 
                           onClick={handleUpdateThread}
                           disabled={isSubmitting}
-                          className="px-8 py-3 bg-black text-white rounded-2xl font-bold uppercase text-[10px] tracking-widest flex items-center gap-2"
+                          className="px-8 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-bold uppercase text-[10px] tracking-widest flex items-center gap-2"
                         >
                           {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}
                         </button>
                         <button 
                           onClick={() => setIsEditing(false)}
-                          className="px-8 py-3 bg-gray-100 text-gray-500 rounded-2xl font-bold uppercase text-[10px] tracking-widest"
+                          className="px-8 py-3 bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 rounded-2xl font-bold uppercase text-[10px] tracking-widest"
                         >
                           Cancel
                         </button>
@@ -378,19 +378,19 @@ export default function HubForums({ user, initialThreadId }: { user: User, initi
                     </div>
                   ) : (
                     <>
-                      <h1 className="text-3xl md:text-4xl font-black italic serif leading-tight tracking-tight">{selectedThread.title}</h1>
-                      <div className="flex items-center gap-4 py-4 border-y border-black/[0.03]">
-                        <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center font-bold text-xs uppercase shadow-inner">
+                      <h1 className="text-3xl md:text-4xl font-black italic serif leading-tight tracking-tight text-black dark:text-white">{selectedThread.title}</h1>
+                      <div className="flex items-center gap-4 py-4 border-y border-black/[0.03] dark:border-white/[0.03]">
+                        <div className="w-10 h-10 bg-gray-100 dark:bg-zinc-800 rounded-full flex items-center justify-center font-bold text-xs uppercase shadow-inner text-black dark:text-white">
                           {selectedThread.authorName.charAt(0)}
                         </div>
                         <div>
-                          <p className="text-sm font-bold">{selectedThread.authorName}</p>
-                          <p className="text-[10px] text-gray-400 font-medium">
+                          <p className="text-sm font-bold text-black dark:text-white">{selectedThread.authorName}</p>
+                          <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">
                             {selectedThread.createdAt && formatDistanceToNow(selectedThread.createdAt.toDate ? selectedThread.createdAt.toDate() : selectedThread.createdAt, { addSuffix: true })}
                           </p>
                         </div>
                       </div>
-                      <div className="prose prose-sm md:prose-base max-w-none text-gray-600 leading-relaxed font-medium markdown-content">
+                      <div className="prose prose-sm md:prose-base max-w-none text-gray-600 dark:text-gray-300 leading-relaxed font-medium markdown-content">
                         <ReactMarkdown>{selectedThread.content}</ReactMarkdown>
                       </div>
                     </>
@@ -399,38 +399,38 @@ export default function HubForums({ user, initialThreadId }: { user: User, initi
             </div>
 
             <div className="space-y-6">
-              <h3 className="text-xl font-bold italic serif px-4">Responses ({comments.length})</h3>
+              <h3 className="text-xl font-bold italic serif px-4 text-black dark:text-white">Responses ({comments.length})</h3>
               <div className="space-y-4">
                 {comments.map((comment) => (
-                  <div key={comment.id} className="bg-white p-8 rounded-[2.5rem] border border-black/5 shadow-xs">
+                  <div key={comment.id} className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-black/5 dark:border-white/5 shadow-xs">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-8 h-8 bg-gray-50 rounded-full flex items-center justify-center font-bold text-[10px] border border-black/5">
+                      <div className="w-8 h-8 bg-gray-50 dark:bg-zinc-800 rounded-full flex items-center justify-center font-bold text-[10px] border border-black/5 dark:border-white/5 text-black dark:text-white">
                         {comment.authorName?.charAt(0)}
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-xs font-bold">{comment.authorName}</span>
-                        <span className="text-[9px] text-gray-400">
+                        <span className="text-xs font-bold text-black dark:text-white">{comment.authorName}</span>
+                        <span className="text-[9px] text-gray-400 dark:text-gray-500">
                           {comment.createdAt && formatDistanceToNow(comment.createdAt.toDate(), { addSuffix: true })}
                         </span>
                       </div>
                     </div>
-                    <div className="prose prose-xs max-w-none text-gray-600 leading-relaxed font-medium markdown-content">
+                    <div className="prose prose-xs max-w-none text-gray-600 dark:text-gray-300 leading-relaxed font-medium markdown-content">
                       <ReactMarkdown>{comment.content}</ReactMarkdown>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="bg-white p-8 rounded-[2.5rem] border border-black/5 shadow-lg space-y-4">
+              <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-black/5 dark:border-white/5 shadow-lg space-y-4">
                 <textarea 
                   placeholder="Share your wisdom..."
                   value={newComment}
                   onChange={e => setNewComment(e.target.value)}
-                  className="w-full bg-gray-50 rounded-2xl p-6 text-sm font-medium outline-none border border-black/5 h-32 focus:ring-2 focus:ring-black/5 transition-all"
+                  className="w-full bg-gray-50 dark:bg-zinc-800 rounded-2xl p-6 text-sm font-medium outline-none border border-black/5 dark:border-white/5 h-32 focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 transition-all text-black dark:text-white"
                 />
                 <button 
                   onClick={handlePostComment}
-                  className="w-full py-4 bg-black text-white rounded-2xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-transform shadow-xl shadow-black/10"
+                  className="w-full py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-transform shadow-xl shadow-black/10"
                 >
                   <Send className="w-4 h-4" /> Post Response
                 </button>
@@ -463,12 +463,12 @@ export default function HubForums({ user, initialThreadId }: { user: User, initi
     <div className="space-y-10 animate-in fade-in duration-500 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
          <div className="space-y-1">
-            <h1 className="text-4xl font-black italic serif tracking-tight">Forums & Support</h1>
-            <p className="text-gray-400 font-medium">The Inzuka Knowledge Agora. Discussion, support, and communal wisdom.</p>
+            <h1 className="text-4xl font-black italic serif tracking-tight text-black dark:text-white">Forums & Support</h1>
+            <p className="text-gray-400 dark:text-gray-500 font-medium">The Inzuka Knowledge Agora. Discussion, support, and communal wisdom.</p>
          </div>
          <button 
           onClick={() => setShowCreate(true)}
-          className="px-8 py-4 bg-black text-white rounded-3xl font-black uppercase text-[10px] tracking-widest flex items-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-black/10"
+          className="px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-3xl font-black uppercase text-[10px] tracking-widest flex items-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-black/10 dark:shadow-white/10"
          >
             <Plus className="w-4 h-4" /> Start Discussion
          </button>
@@ -481,11 +481,11 @@ export default function HubForums({ user, initialThreadId }: { user: User, initi
                onClick={() => setActiveCategory('all')}
                className={cn(
                  "w-full flex items-center justify-between p-4 rounded-2xl transition-all group",
-                 activeCategory === 'all' ? "bg-black text-white shadow-xl shadow-black/10" : "bg-white border border-black/5 text-gray-600 hover:border-black/20"
+                 activeCategory === 'all' ? "bg-black dark:bg-white text-white dark:text-black shadow-xl shadow-black/10 dark:shadow-white/10" : "bg-white dark:bg-zinc-900 border border-black/5 dark:border-white/5 text-gray-600 dark:text-gray-400 hover:border-black/20 dark:hover:border-white/20"
                )}
             >
                <div className="flex items-center gap-3">
-                  <Clock className={cn("w-4 h-4", activeCategory === 'all' ? "text-white" : "text-gray-400")} />
+                  <Clock className={cn("w-4 h-4", activeCategory === 'all' ? "text-white dark:text-black" : "text-gray-400 dark:text-gray-500")} />
                   <span className="text-sm font-bold">All Discussions</span>
                </div>
             </button>
@@ -495,21 +495,21 @@ export default function HubForums({ user, initialThreadId }: { user: User, initi
                 onClick={() => setActiveCategory(cat.label)}
                 className={cn(
                   "w-full flex items-center justify-between p-4 rounded-2xl transition-all group",
-                  activeCategory === cat.label ? "bg-black text-white shadow-xl shadow-black/10" : "bg-white border border-black/5 text-gray-600 hover:border-black/20 focus:scale-[1.01]"
+                  activeCategory === cat.label ? "bg-black dark:bg-white text-white dark:text-black shadow-xl shadow-black/10 dark:shadow-white/10" : "bg-white dark:bg-zinc-900 border border-black/5 dark:border-white/5 text-gray-600 dark:text-gray-400 hover:border-black/20 dark:hover:border-white/20 focus:scale-[1.01]"
                 )}
                >
                   <div className="flex items-center gap-3">
-                     <cat.icon className={cn("w-4 h-4", activeCategory === cat.label ? "text-white" : "text-gray-400 group-hover:text-black")} />
+                     <cat.icon className={cn("w-4 h-4", activeCategory === cat.label ? "text-white dark:text-black" : "text-gray-400 dark:text-gray-500 group-hover:text-black dark:group-hover:text-white")} />
                      <span className="text-sm font-bold">{cat.label}</span>
                   </div>
                </button>
             ))}
 
-            <div className="mt-8 bg-orange-50 p-6 rounded-3xl border border-orange-100 flex flex-col items-center text-center space-y-2">
+            <div className="mt-8 bg-orange-50 dark:bg-orange-500/10 p-6 rounded-3xl border border-orange-100 dark:border-orange-500/20 flex flex-col items-center text-center space-y-2">
                <HandHelping className="w-8 h-8 text-orange-500" />
-               <h4 className="text-sm font-bold text-orange-900 italic serif">Need Guard Help?</h4>
-               <p className="text-[10px] text-orange-700/70 font-medium leading-relaxed">Reach out to our global hub for verified communal governance assistance.</p>
-               <button className="pt-2 text-[10px] font-black uppercase tracking-widest text-orange-900 underline underline-offset-4">Get Support</button>
+               <h4 className="text-sm font-bold text-orange-900 dark:text-orange-300 italic serif">Need Guard Help?</h4>
+               <p className="text-[10px] text-orange-700/70 dark:text-orange-400/80 font-medium leading-relaxed">Reach out to our global hub for verified communal governance assistance.</p>
+               <button className="pt-2 text-[10px] font-black uppercase tracking-widest text-orange-900 dark:text-orange-300 underline underline-offset-4">Get Support</button>
             </div>
          </div>
 
@@ -517,13 +517,13 @@ export default function HubForums({ user, initialThreadId }: { user: User, initi
          <div className="lg:col-span-3 space-y-8">
             <div className="flex items-center justify-between">
                <div className="flex items-center gap-6">
-                  <button className="text-sm font-black italic serif underline underline-offset-8 decoration-2">Trending</button>
-                  <button className="text-sm font-medium text-gray-400 hover:text-black transition-colors">Newest</button>
-                  <button className="text-sm font-medium text-gray-400 hover:text-black transition-colors">Unanswered</button>
+                  <button className="text-sm font-black italic serif underline underline-offset-8 decoration-2 text-black dark:text-white">Trending</button>
+                  <button className="text-sm font-medium text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors">Newest</button>
+                  <button className="text-sm font-medium text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors">Unanswered</button>
                </div>
-               <div className="flex items-center bg-white px-4 py-2 rounded-xl border border-black/5 group-focus-within:border-black transition-colors">
-                  <Search className="w-4 h-4 text-gray-400" />
-                  <input type="text" placeholder="Search knowledge base..." className="bg-transparent border-none focus:outline-none text-xs ml-3 w-40 font-medium" />
+               <div className="flex items-center bg-white dark:bg-zinc-900 px-4 py-2 rounded-xl border border-black/5 dark:border-white/5 group-focus-within:border-black dark:group-focus-within:border-white transition-colors">
+                  <Search className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                  <input type="text" placeholder="Search knowledge base..." className="bg-transparent border-none focus:outline-none text-xs ml-3 w-40 font-medium text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500" />
                </div>
             </div>
 
@@ -569,16 +569,16 @@ export default function HubForums({ user, initialThreadId }: { user: User, initi
 
             <div className="space-y-6">
                {loading ? (
-                 <div className="flex flex-col items-center justify-center py-24 bg-white rounded-[3rem] border border-black/5">
-                   <Loader2 className="w-12 h-12 animate-spin text-black/10" />
-                   <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-gray-300">Synchronizing Knowledge Agora...</p>
+                 <div className="flex flex-col items-center justify-center py-24 bg-white dark:bg-zinc-900 rounded-[3rem] border border-black/5 dark:border-white/5">
+                   <Loader2 className="w-12 h-12 animate-spin text-black/10 dark:text-white/10" />
+                   <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-gray-300 dark:text-gray-600">Synchronizing Knowledge Agora...</p>
                  </div>
                ) : threads.length === 0 ? (
-                 <div className="text-center py-32 bg-white rounded-[3rem] border border-black/5 border-dashed">
-                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <MessageSquare className="w-10 h-10 text-gray-200" />
+                 <div className="text-center py-32 bg-white dark:bg-zinc-900 rounded-[3rem] border border-black/5 dark:border-white/5 border-dashed">
+                    <div className="w-20 h-20 bg-gray-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <MessageSquare className="w-10 h-10 text-gray-200 dark:text-gray-600" />
                     </div>
-                    <p className="text-lg font-bold text-gray-400 italic serif">No discussions found in this channel.</p>
+                    <p className="text-lg font-bold text-gray-400 dark:text-gray-500 italic serif">No discussions found in this channel.</p>
                     <button 
                       onClick={() => setShowCreate(true)}
                       className="mt-4 text-xs font-black uppercase tracking-widest text-blue-500 hover:underline"
@@ -595,7 +595,7 @@ export default function HubForums({ user, initialThreadId }: { user: User, initi
                         layout
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-white rounded-[3rem] border border-black/5 shadow-sm hover:shadow-2xl hover:border-black/20 transition-all group cursor-pointer overflow-hidden flex flex-col md:flex-row relative"
+                        className="bg-white dark:bg-zinc-900 rounded-[3rem] border border-black/5 dark:border-white/5 shadow-sm hover:shadow-2xl hover:border-black/20 dark:hover:border-white/20 transition-all group cursor-pointer overflow-hidden flex flex-col md:flex-row relative"
                       >
                          {thread.featuredImage && (
                             <div className="w-full md:w-64 h-48 md:h-auto overflow-hidden shrink-0">
@@ -610,10 +610,10 @@ export default function HubForums({ user, initialThreadId }: { user: User, initi
                          <div className="p-8 flex-1 flex flex-col justify-between">
                             <div className="space-y-3">
                                <div className="flex items-center justify-between">
-                                  <span className="px-2 py-0.5 bg-gray-50 border border-black/5 rounded-md text-[8px] font-black uppercase tracking-widest text-gray-400">
+                                  <span className="px-2 py-0.5 bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 rounded-md text-[8px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
                                     {thread.category}
                                   </span>
-                                  <div className="flex items-center gap-4 text-gray-400">
+                                  <div className="flex items-center gap-4 text-gray-400 dark:text-gray-500">
                                      <div className="flex items-center gap-1">
                                         <MessageCircle className="w-3 h-3" />
                                         <span className="text-[10px] font-black">{thread.replyCount || 0}</span>
@@ -624,19 +624,19 @@ export default function HubForums({ user, initialThreadId }: { user: User, initi
                                      </div>
                                   </div>
                                </div>
-                               <h4 className="text-2xl font-black italic serif tracking-tight group-hover:text-blue-600 transition-colors leading-tight">{thread.title}</h4>
-                               <p className="text-sm text-gray-400 line-clamp-2 leading-relaxed font-medium">
+                               <h4 className="text-2xl font-black italic serif tracking-tight text-black dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-tight">{thread.title}</h4>
+                               <p className="text-sm text-gray-400 dark:text-gray-500 line-clamp-2 leading-relaxed font-medium">
                                  {thread.content}
                                </p>
                             </div>
-                            <div className="flex items-center justify-between mt-6 pt-6 border-t border-black/[0.03]">
+                            <div className="flex items-center justify-between mt-6 pt-6 border-t border-black/[0.03] dark:border-white/[0.03]">
                                <div className="flex items-center gap-2">
-                                  <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-[10px] font-black uppercase transition-colors group-hover:bg-black group-hover:text-white">
+                                  <div className="w-8 h-8 bg-gray-100 dark:bg-zinc-800 rounded-full flex items-center justify-center text-[10px] font-black uppercase text-black dark:text-white transition-colors group-hover:bg-black dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-black">
                                      {thread.authorName?.charAt(0)}
                                   </div>
-                                  <span className="text-xs font-bold text-gray-600">{thread.authorName}</span>
+                                  <span className="text-xs font-bold text-gray-600 dark:text-gray-400">{thread.authorName}</span>
                                </div>
-                               <div className="flex items-center gap-1 text-gray-400">
+                               <div className="flex items-center gap-1 text-gray-400 dark:text-gray-500">
                                   <Clock className="w-3 h-3" />
                                   <span className="text-[10px] font-medium">
                                     {thread.createdAt && formatDistanceToNow(thread.createdAt.toDate(), { addSuffix: true })}
@@ -659,43 +659,43 @@ export default function HubForums({ user, initialThreadId }: { user: User, initi
                 initial={{ scale: 0.9, opacity: 0, y: 30 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.9, opacity: 0, y: 30 }}
-                className="bg-white w-full max-w-3xl rounded-[3rem] p-10 relative max-h-[90vh] overflow-y-auto shadow-2xl"
+                className="bg-white dark:bg-zinc-900 w-full max-w-3xl rounded-[3rem] p-10 relative max-h-[90vh] overflow-y-auto shadow-2xl"
               >
-                 <button onClick={() => setShowCreate(false)} className="absolute top-8 right-8 p-3 hover:bg-gray-100 rounded-full transition-colors z-10">
-                    <X className="w-6 h-6 text-gray-400" />
+                 <button onClick={() => setShowCreate(false)} className="absolute top-8 right-8 p-3 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors z-10">
+                    <X className="w-6 h-6 text-gray-400 dark:text-gray-500" />
                  </button>
 
                  <div className="space-y-8">
                     <div>
-                       <h2 className="text-4xl font-black serif italic tracking-tight">Post to Agora</h2>
-                       <p className="text-gray-400 text-sm mt-2 font-medium">Contribute an article or spark a discussion in the knowledge base.</p>
+                       <h2 className="text-4xl font-black serif italic tracking-tight text-black dark:text-white">Post to Agora</h2>
+                       <p className="text-gray-400 dark:text-gray-500 text-sm mt-2 font-medium">Contribute an article or spark a discussion in the knowledge base.</p>
                     </div>
                     
                     <form onSubmit={handleCreateThread} className="space-y-6">
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="space-y-2">
-                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-2">Channel</label>
+                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 px-2">Channel</label>
                              <select 
                                value={newCategory}
                                onChange={e => setNewCategory(e.target.value)}
-                               className="w-full bg-gray-50 rounded-2xl p-4 font-bold text-sm outline-none border border-black/5 hover:border-black/20 focus:border-black transition-all appearance-none"
+                               className="w-full bg-gray-50 dark:bg-zinc-800 text-black dark:text-white rounded-2xl p-4 font-bold text-sm outline-none border border-black/5 dark:border-white/5 hover:border-black/20 dark:hover:border-white/20 focus:border-black dark:focus:border-white transition-all appearance-none"
                              >
                                 {categories.map(c => <option key={c.label} value={c.label}>{c.label}</option>)}
                              </select>
                           </div>
                           
                           <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-2">Hero Image</label>
-                            <label className="w-full flex items-center justify-center p-4 bg-gray-50 rounded-2xl border border-black/5 cursor-pointer hover:bg-gray-100 transition-all border-dashed group">
-                               <ImageIcon className="w-4 h-4 text-gray-400 mr-2 group-hover:text-black" />
-                               <span className="text-xs font-bold text-gray-500 group-hover:text-black">Upload Cover Photo</span>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 px-2">Hero Image</label>
+                            <label className="w-full flex items-center justify-center p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl border border-black/5 dark:border-white/5 cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all border-dashed group">
+                               <ImageIcon className="w-4 h-4 text-gray-400 dark:text-gray-500 mr-2 group-hover:text-black dark:group-hover:text-white" />
+                               <span className="text-xs font-bold text-gray-500 dark:text-gray-400 group-hover:text-black dark:group-hover:text-white">Upload Cover Photo</span>
                                <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
                             </label>
                           </div>
                        </div>
 
                        {featuredImage && (
-                          <div className="relative w-full h-56 rounded-3xl overflow-hidden border border-black/5 shadow-inner group">
+                          <div className="relative w-full h-56 rounded-3xl overflow-hidden border border-black/5 dark:border-white/5 shadow-inner group">
                              <img src={featuredImage} alt="Preview" className="w-full h-full object-cover transition-transform group-hover:scale-105" referrerPolicy="no-referrer" />
                              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                 <button 
@@ -710,32 +710,32 @@ export default function HubForums({ user, initialThreadId }: { user: User, initi
                        )}
 
                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-2">Headline</label>
+                          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 px-2">Headline</label>
                           <input 
                             type="text" 
                             required 
                             placeholder="e.g. Success Story: Our Chama reached its yearly goal..."
                             value={newTitle}
                             onChange={e => setNewTitle(e.target.value)}
-                            className="w-full bg-gray-50 rounded-2xl p-4 font-black text-2xl outline-none border border-black/5 hover:border-black/20 focus:border-black transition-all" 
+                            className="w-full bg-gray-50 dark:bg-zinc-800 text-black dark:text-white rounded-2xl p-4 font-black text-2xl outline-none border border-black/5 dark:border-white/5 hover:border-black/20 dark:hover:border-white/20 focus:border-black dark:focus:border-white transition-all" 
                           />
                        </div>
 
                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-2">Body Content</label>
+                          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 px-2">Body Content</label>
                           <textarea 
                             required
                             placeholder="Detail your insights, share photos, or ask questions..."
                             value={newContent}
                             onChange={e => setNewContent(e.target.value)}
-                            className="w-full bg-gray-50 rounded-2xl p-6 text-[15px] font-medium outline-none border border-black/5 h-48 hover:border-black/20 focus:border-black transition-all resize-none" 
+                            className="w-full bg-gray-50 dark:bg-zinc-800 text-black dark:text-white rounded-2xl p-6 text-[15px] font-medium outline-none border border-black/5 dark:border-white/5 h-48 hover:border-black/20 dark:hover:border-white/20 focus:border-black dark:focus:border-white transition-all resize-none" 
                           />
                        </div>
 
                        <button 
                         type="submit" 
                         disabled={isSubmitting}
-                        className="w-full py-6 bg-black text-white rounded-3xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-2xl hover:bg-blue-600 active:scale-95 transition-all disabled:opacity-50"
+                        className="w-full py-6 bg-black dark:bg-white text-white dark:text-black rounded-3xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-2xl hover:bg-blue-600 dark:hover:bg-blue-500 dark:hover:text-white active:scale-95 transition-all disabled:opacity-50"
                        >
                           {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Plus className="w-4 h-4" /> Publish Entry</>}
                        </button>

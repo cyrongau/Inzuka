@@ -40,8 +40,8 @@ export const DebtManager: React.FC<DebtManagerProps> = ({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
       <div className="lg:col-span-4 space-y-6">
-        <div className="bg-white p-8 rounded-[2.5rem] border border-black/5 shadow-sm">
-          <h3 className="text-xl font-bold mb-8 flex items-center gap-2 italic serif">
+        <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-black/5 dark:border-white/5 shadow-sm">
+          <h3 className="text-xl font-bold mb-8 flex items-center gap-2 italic serif text-black dark:text-white">
             <HandCoins className="w-5 h-5" /> Manage Obligations
           </h3>
           <div className="space-y-6">
@@ -50,7 +50,7 @@ export const DebtManager: React.FC<DebtManagerProps> = ({
                 onClick={() => setDebtType('lent')}
                 className={cn(
                   "flex-1 p-4 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all gap-2 flex flex-col items-center",
-                  debtType === 'lent' ? "bg-black text-white shadow-lg scale-105" : "bg-gray-50 text-gray-400"
+                  debtType === 'lent' ? "bg-black dark:bg-white text-white dark:text-black shadow-lg scale-105 border-transparent" : "bg-gray-50 dark:bg-zinc-800 text-gray-400 border-black/5 dark:border-white/5"
                 )}
               >
                 <ArrowUpRight className="w-4 h-4" />
@@ -60,7 +60,7 @@ export const DebtManager: React.FC<DebtManagerProps> = ({
                 onClick={() => setDebtType('borrowed')}
                 className={cn(
                   "flex-1 p-4 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all gap-2 flex flex-col items-center",
-                  debtType === 'borrowed' ? "bg-black text-white shadow-lg scale-105" : "bg-gray-50 text-gray-400"
+                  debtType === 'borrowed' ? "bg-black dark:bg-white text-white dark:text-black shadow-lg scale-105 border-transparent" : "bg-gray-50 dark:bg-zinc-800 text-gray-400 border-black/5 dark:border-white/5"
                 )}
               >
                 <ArrowDownLeft className="w-4 h-4" />
@@ -72,16 +72,16 @@ export const DebtManager: React.FC<DebtManagerProps> = ({
               <input 
                 type="text" placeholder="Entity Name (e.g. Aunt J, Shop)" 
                 value={person} onChange={e => setPerson(e.target.value)}
-                className="w-full bg-gray-50 border border-black/5 rounded-2xl p-5 text-sm font-bold outline-none focus:ring-2 focus:ring-black/10"
+                className="w-full bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 rounded-2xl p-5 text-sm font-bold outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600"
               />
               <input 
                 type="number" placeholder="KES 0.00" 
                 value={amount} onChange={e => setAmount(e.target.value)}
-                className="w-full bg-gray-50 border border-black/5 rounded-2xl p-5 text-2xl font-black italic serif outline-none focus:ring-2 focus:ring-black/10"
+                className="w-full bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 rounded-2xl p-5 text-2xl font-black italic serif outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600"
               />
               <button 
                 onClick={handleAddEntry}
-                className="w-full bg-black text-white py-5 rounded-2xl font-bold text-sm tracking-widest uppercase shadow-xl hover:shadow-black/20 transition-all mt-4"
+                className="w-full bg-black dark:bg-white text-white dark:text-black py-5 rounded-2xl font-bold text-sm tracking-widest uppercase shadow-xl hover:shadow-black/20 transition-all mt-4 outline-none"
               >
                 Sync Entry
               </button>
@@ -90,8 +90,8 @@ export const DebtManager: React.FC<DebtManagerProps> = ({
         </div>
       </div>
 
-      <div className="lg:col-span-8 bg-white p-10 rounded-[3rem] border border-black/5 shadow-sm min-h-[500px]">
-        <h3 className="text-2xl font-bold tracking-tight mb-8 italic serif">Obligation Ledger</h3>
+      <div className="lg:col-span-8 bg-white dark:bg-zinc-900 p-10 rounded-[3rem] border border-black/5 dark:border-white/5 shadow-sm min-h-[500px]">
+        <h3 className="text-2xl font-bold tracking-tight mb-8 italic serif text-black dark:text-white">Obligation Ledger</h3>
         <div className="space-y-4">
           <AnimatePresence mode="popLayout">
             {loans.map((loan) => (
@@ -101,8 +101,8 @@ export const DebtManager: React.FC<DebtManagerProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 key={loan.id} 
                 className={cn(
-                  "flex items-center justify-between p-7 rounded-[2.5rem] border border-black/[0.03] transition-all group",
-                  loan.isSettled ? "opacity-50 grayscale bg-gray-50" : "bg-white hover:shadow-xl"
+                  "flex items-center justify-between p-7 rounded-[2.5rem] border border-black/[0.03] dark:border-white/[0.03] transition-all group",
+                  loan.isSettled ? "opacity-50 grayscale bg-gray-50 dark:bg-white/5" : "bg-white dark:bg-zinc-800/50 hover:shadow-xl dark:hover:bg-zinc-800"
                 )}
               >
                 <div className="flex items-center gap-6">
@@ -113,7 +113,7 @@ export const DebtManager: React.FC<DebtManagerProps> = ({
                     {loan.type === 'lent' ? <ArrowUpRight className="w-8 h-8" /> : <ArrowDownLeft className="w-8 h-8" />}
                   </div>
                   <div>
-                    <p className="font-black text-xl italic serif">{loan.person}</p>
+                    <p className="font-black text-xl italic serif text-black dark:text-white">{loan.person}</p>
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">
                       {loan.type === 'lent' ? 'Resource Lent' : 'Resource Borrowed'} • {format(new Date(loan.date), 'MMM d, yyyy')}
                     </p>
@@ -121,12 +121,12 @@ export const DebtManager: React.FC<DebtManagerProps> = ({
                 </div>
                 <div className="flex items-center gap-6 text-right">
                   <div>
-                    <p className="text-2xl font-black">KES {loan.amount.toLocaleString()}</p>
+                    <p className="text-2xl font-black text-black dark:text-white">KES {loan.amount.toLocaleString()}</p>
                     <button 
                       onClick={() => updateDoc(doc(db, 'loans', loan.id), { isSettled: !loan.isSettled })}
                       className={cn(
                         "text-[9px] font-black uppercase tracking-widest mt-2 flex items-center justify-end gap-2",
-                        loan.isSettled ? "text-green-600" : "text-gray-300 hover:text-black"
+                        loan.isSettled ? "text-green-600 dark:text-green-400" : "text-gray-300 dark:text-gray-600 hover:text-black dark:hover:text-white"
                       )}
                     >
                       {loan.isSettled ? <CheckCircle2 className="w-3.5 h-3.5" /> : null}
@@ -135,7 +135,7 @@ export const DebtManager: React.FC<DebtManagerProps> = ({
                   </div>
                   <button 
                     onClick={() => deleteDoc(doc(db, 'loans', loan.id))}
-                    className="opacity-0 group-hover:opacity-100 p-2 text-gray-300 hover:text-red-500 transition-all hover:bg-red-50 rounded-xl"
+                    className="opacity-0 group-hover:opacity-100 p-2 text-gray-300 hover:text-red-500 transition-all hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl"
                   >
                     <Trash2 className="w-5 h-5" />
                   </button>
@@ -144,8 +144,8 @@ export const DebtManager: React.FC<DebtManagerProps> = ({
             ))}
           </AnimatePresence>
           {loans.length === 0 && (
-            <div className="text-center py-20 bg-gray-50/50 rounded-[3rem] border border-dashed border-black/5">
-              <p className="text-xs font-bold text-gray-300 uppercase tracking-widest italic serif">Your ledger is clear of debt.</p>
+            <div className="text-center py-20 bg-gray-50/50 dark:bg-white/5 rounded-[3rem] border border-dashed border-black/5 dark:border-white/5">
+              <p className="text-xs font-bold text-gray-300 uppercase tracking-widest italic serif text-black dark:text-white">Your ledger is clear of debt.</p>
             </div>
           )}
         </div>

@@ -16,7 +16,8 @@ import {
   Menu,
   X,
   LogOut,
-  HelpCircle
+  HelpCircle,
+  FileText
 } from 'lucide-react';
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
@@ -47,6 +48,7 @@ import Budget from './components/views/Budget';
 import Holidays from './components/views/Holidays';
 import Profile from './components/views/Profile';
 import WalletView from './components/views/Wallet';
+import Reports from './components/views/Reports';
 import Chat from './components/views/Chat';
 import PublicVerification from './components/views/community/PublicVerification';
 import ScheduledNotifications from './components/ScheduledNotifications';
@@ -108,6 +110,7 @@ export default function App() {
     { id: 'meals', label: 'Meal Planning', icon: UtensilsCrossed },
     { id: 'chat', label: 'Family Lounge', icon: Bell },
     { id: 'wallet', label: 'Digital Wallet', icon: Wallet },
+    { id: 'reports', label: 'Financial Reports', icon: FileText },
     { id: 'budget', label: 'Budget & Goals', icon: Layers },
     { id: 'holidays', label: 'Holidays', icon: Plane },
     { id: 'profile', label: 'My Profile', icon: UserIcon },
@@ -116,9 +119,9 @@ export default function App() {
 
   const communityMenuItems = [
     { id: 'dashboard', label: 'Community Hub', icon: Home },
-    { id: 'groups', label: 'Networks & Groups', icon: Layers },
+    { id: 'groups', label: 'Groups', icon: Layers },
     { id: 'finance', label: 'Table Banking', icon: Wallet },
-    { id: 'projects', label: 'Community Projects', icon: Layers },
+    { id: 'projects', label: 'Group Projects', icon: Layers },
     { id: 'forums', label: 'Forums & Support', icon: Bell },
     { id: 'profile', label: 'My Profile', icon: UserIcon },
     { id: 'support', label: 'Report / Get Help', icon: HelpCircle },
@@ -209,7 +212,7 @@ export default function App() {
             }}
           />
         );
-        case 'groups': return <HubGroups user={user} profile={profile} onSelect={setSelectedCommunityId} />;
+        case 'groups': return <HubGroups user={user} profile={profile} onSelect={(id) => { setSelectedCommunityId(id); setActiveTab('dashboard'); }} />;
         case 'finance': return <HubFinance user={user} />;
         case 'projects': return <HubProjects user={user} />;
         case 'forums': return (
@@ -231,6 +234,7 @@ export default function App() {
       case 'meals': return <MealPlanning user={user} profile={profile} />;
       case 'chat': return <Chat user={user} profile={profile} />;
       case 'wallet': return <WalletView user={user} profile={profile} />;
+      case 'reports': return <Reports user={user} profile={profile} />;
       case 'budget': return <Budget user={user} profile={profile} />;
       case 'holidays': return <Holidays user={user} profile={profile} />;
       case 'profile': return <Profile user={user} profile={profile} />;

@@ -15,11 +15,13 @@ import { db } from '../../../lib/firebase';
 import { collection, query, onSnapshot, where, limit } from 'firebase/firestore';
 import { cn } from '../../../lib/utils';
 import { motion } from 'framer-motion';
+import CreateCommunityWizard from './CreateCommunityWizard';
 
 export default function HubGroups({ user, profile, onSelect }: { user: User, profile: any, onSelect: (id: string) => void }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [communities, setCommunities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showWizard, setShowWizard] = useState(false);
 
   useEffect(() => {
     // Show all public communities or communities user is in
@@ -41,30 +43,30 @@ export default function HubGroups({ user, profile, onSelect }: { user: User, pro
       {/* Header section with Stats */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
          <div className="lg:col-span-2 space-y-6">
-            <h1 className="text-4xl font-black italic serif tracking-tight">Networks & Groups</h1>
-            <p className="text-gray-400 font-medium max-w-xl">Discover new communities, industry networks, and social collectives within the Inzuka ecosystem.</p>
+            <h1 className="text-4xl font-black italic serif tracking-tight text-black dark:text-white">Groups</h1>
+            <p className="text-gray-400 dark:text-gray-500 font-medium max-w-xl">Discover and join local groups, clubs, and communities.</p>
             
-            <div className="flex items-center gap-4 bg-white p-2 rounded-2xl shadow-sm border border-black/5 max-w-md">
-               <div className="pl-4 text-gray-400">
+            <div className="flex items-center gap-4 bg-white dark:bg-zinc-900 p-2 rounded-2xl shadow-sm border border-black/5 dark:border-white/5 max-w-md">
+               <div className="pl-4 text-gray-400 dark:text-gray-500">
                   <Search className="w-5 h-5" />
                </div>
                <input 
                   type="text" 
-                  placeholder="Search networks..." 
+                  placeholder="Search groups..." 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full py-3 bg-transparent font-medium focus:outline-none"
+                  className="w-full py-3 bg-transparent font-medium focus:outline-none text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600"
                />
             </div>
          </div>
 
-         <div className="bg-black text-white p-8 rounded-[2.5rem] relative overflow-hidden flex flex-col justify-between">
+         <div className="bg-black dark:bg-zinc-900 text-white p-8 rounded-[2.5rem] relative overflow-hidden flex flex-col justify-between shadow-sm border border-transparent dark:border-white/5">
             <div className="relative z-10 space-y-2">
-               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Network Growth</p>
+               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 dark:text-gray-500">New Members</p>
                <h3 className="text-3xl font-black italic serif underline decoration-orange-500 underline-offset-8">+2.4k</h3>
-               <p className="text-xs text-white/60">New members joined Inzuka networks this week.</p>
+               <p className="text-xs text-white/60 dark:text-gray-400">People joined a group this week.</p>
             </div>
-            <TrendingUp className="absolute -right-4 -bottom-4 w-32 h-32 text-white/5" />
+            <TrendingUp className="absolute -right-4 -bottom-4 w-32 h-32 text-white/5 dark:text-white/5" />
          </div>
       </div>
 
@@ -77,58 +79,63 @@ export default function HubGroups({ user, profile, onSelect }: { user: User, pro
                animate={{ opacity: 1, y: 0 }}
                transition={{ delay: i * 0.05 }}
                onClick={() => onSelect(community.id)}
-               className="group bg-white rounded-[2.5rem] border border-black/5 p-8 shadow-sm hover:shadow-xl hover:border-black/10 transition-all cursor-pointer flex flex-col justify-between"
+               className="group bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-black/5 dark:border-white/5 p-8 shadow-sm hover:shadow-xl hover:border-black/10 dark:hover:border-white/10 transition-all cursor-pointer flex flex-col justify-between"
             >
                <div className="space-y-6">
                   <div className="flex items-start justify-between">
-                     <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:bg-black group-hover:text-white transition-all">
+                     <div className="w-16 h-16 bg-gray-50 dark:bg-zinc-800 rounded-2xl flex items-center justify-center text-gray-400 dark:text-gray-500 group-hover:bg-black dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-black transition-all shadow-sm">
                         <Globe className="w-8 h-8" />
                      </div>
-                     <div className="px-3 py-1 bg-gray-100 rounded-full text-[8px] font-black uppercase tracking-widest text-gray-400">
+                     <div className="px-3 py-1 bg-gray-100 dark:bg-zinc-800 rounded-full text-[8px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 border border-black/5 dark:border-white/5">
                         {community.type}
                      </div>
                   </div>
 
                   <div className="space-y-2">
-                     <h3 className="text-xl font-bold italic serif tracking-tight group-hover:underline underline-offset-4">{community.name}</h3>
-                     <p className="text-xs text-gray-400 font-medium line-clamp-2 leading-relaxed">
-                        {community.description || "A dynamic collective focused on communal growth and shared prosperity."}
+                     <h3 className="text-xl font-bold italic serif tracking-tight group-hover:underline underline-offset-4 text-black dark:text-white">{community.name}</h3>
+                     <p className="text-xs text-gray-400 dark:text-gray-500 font-medium line-clamp-2 leading-relaxed">
+                        {community.description || "A group of people coming together to share and grow."}
                      </p>
                   </div>
                </div>
 
-               <div className="pt-8 border-t border-black/[0.03] mt-8 flex items-center justify-between">
+               <div className="pt-8 border-t border-black/[0.03] dark:border-white/[0.05] mt-8 flex items-center justify-between">
                   <div className="flex -space-x-2">
                      {[...Array(3)].map((_, i) => (
-                        <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-[10px] font-bold">
+                        <div key={i} className="w-8 h-8 rounded-full border-2 border-white dark:border-zinc-900 bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-black dark:text-white">
                            {String.fromCharCode(65 + i)}
                         </div>
                      ))}
-                     <div className="w-8 h-8 rounded-full border-2 border-white bg-black text-white flex items-center justify-center text-[8px] font-black">
+                     <div className="w-8 h-8 rounded-full border-2 border-white dark:border-zinc-900 bg-black dark:bg-zinc-700 text-white flex items-center justify-center text-[8px] font-black">
                         +{community.memberIds?.length || 0}
                      </div>
                   </div>
-                  <div className="flex items-center gap-2 text-black font-black uppercase text-[10px] tracking-widest group-hover:gap-4 transition-all">
-                     Enter <ArrowRight className="w-4 h-4" />
+                  <div className="flex items-center gap-2 text-black dark:text-white font-black uppercase text-[10px] tracking-widest group-hover:gap-4 transition-all">
+                     {(community.memberIds?.includes(user.uid) || community.moderatorIds?.includes(user.uid)) ? "Open Group" : "Join Group"} <ArrowRight className="w-4 h-4" />
                   </div>
                </div>
             </motion.div>
          ))}
 
          {/* Create New network CTA */}
-         <div className="border-2 border-dashed border-black/5 rounded-[2.5rem] p-8 flex flex-col items-center justify-center text-center space-y-4 hover:border-black/20 transition-all group">
-            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 group-hover:bg-black group-hover:text-white transition-all">
+         <div className="border-2 border-dashed border-black/5 dark:border-white/10 rounded-[2.5rem] p-8 flex flex-col items-center justify-center text-center space-y-4 hover:border-black/20 dark:hover:border-white/20 transition-all group">
+            <div className="w-16 h-16 bg-gray-50 dark:bg-zinc-800 rounded-full flex items-center justify-center text-gray-300 dark:text-gray-600 group-hover:bg-black dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-black transition-all">
                <Plus className="w-8 h-8" />
             </div>
             <div>
-               <h3 className="text-lg font-bold italic serif">Start a Network</h3>
-               <p className="text-xs text-gray-400 font-medium">Build your own community, association, or investment group.</p>
+               <h3 className="text-lg font-bold italic serif text-black dark:text-white">Start a Group</h3>
+               <p className="text-xs text-gray-400 dark:text-gray-500 font-medium">Build your own group, gathering, or club.</p>
             </div>
-            <button className="px-6 py-3 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest">
-               Initialize Group
+            <button 
+               onClick={() => setShowWizard(true)}
+               className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl"
+            >
+               Create Group
             </button>
          </div>
       </div>
+
+      {showWizard && <CreateCommunityWizard user={user} onClose={() => setShowWizard(false)} />}
     </div>
   );
 }

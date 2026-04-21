@@ -300,12 +300,17 @@
         "amount": { "type": "number" },
         "type": { "type": "string", "enum": ["transfer", "payment", "deposit", "withdrawal", "reconciliation"] },
         "status": { "type": "string", "enum": ["pending", "completed", "failed"] },
-        "provider": { "type": "string", "enum": ["m-pesa", "airtel-money", "internal", "bank"] },
+        "provider": { "type": "string", "enum": ["m-pesa", "airtel-money", "internal", "bank", "cash"] },
         "description": { "type": "string" },
-        "metadata": { "type": "object" },
+        "paymentMethod": { "type": "string" },
         "familyId": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
+        "transactionDate": { "type": "string", "format": "date-time" },
+        "loggedAt": { "type": "string", "format": "date-time" },
+        "metadata": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["amount", "type", "transactionDate"]
     },
     "BankAccount": {
       "title": "Bank Account",
@@ -526,9 +531,46 @@
         "isRead": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "date-time" }
       }
+    },
+    "Initiative": {
+      "title": "Community Initiative",
+      "description": "A specific project or goal within a community.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "communityId": { "type": "string" },
+        "communityName": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "leadId": { "type": "string" },
+        "leadName": { "type": "string" },
+        "status": { "type": "string", "enum": ["planning", "in-progress", "completed", "on-hold"] },
+        "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+        "targetDate": { "type": "string", "format": "date-time" },
+        "progress": { "type": "number", "minimum": 0, "maximum": 100 },
+        "gallery": { 
+          "type": "array", 
+          "items": { 
+            "type": "object", 
+            "properties": { 
+              "url": { "type": "string" }, 
+              "caption": { "type": "string" }, 
+              "createdAt": { "type": "string", "format": "date-time" } 
+            } 
+          } 
+        },
+        "taskCount": { "type": "number" },
+        "completedTaskCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["communityId", "title", "status"]
     }
   },
   "firestore": {
+    "/communities/{commId}/projects/{projectId}": {
+      "schema": "Initiative",
+      "description": "Project initiatives within a group"
+    },
     "/users/{userId}": {
       "schema": "User",
       "description": "Global user settings"

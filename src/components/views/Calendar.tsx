@@ -259,56 +259,56 @@ export default function Calendar({ user, profile }: { user: User, profile: any }
     return (
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-black text-white rounded-2xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-black dark:bg-white text-white dark:text-black rounded-2xl flex items-center justify-center">
             <CalendarIcon className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-2xl font-black italic serif tracking-tight">Family Calendar</h2>
-            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">{format(currentMonth, dateFormat)}</p>
+            <h2 className="text-2xl font-black italic serif tracking-tight text-black dark:text-white">Family Calendar</h2>
+            <p className="text-xs text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest">{format(currentMonth, dateFormat)}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-black/5 shadow-sm">
+        <div className="flex items-center gap-2 bg-white dark:bg-zinc-900 p-1.5 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm">
            <button 
              onClick={() => setView('month')}
-             className={cn("px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", view === 'month' ? "bg-black text-white" : "text-gray-400 hover:text-black")}
+             className={cn("px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", view === 'month' ? "bg-black dark:bg-white text-white dark:text-black" : "text-gray-400 hover:text-black dark:hover:text-white")}
            >
              Month
            </button>
            <button 
              onClick={() => setView('week')}
-             className={cn("px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", view === 'week' ? "bg-black text-white" : "text-gray-400 hover:text-black")}
+             className={cn("px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", view === 'week' ? "bg-black dark:bg-white text-white dark:text-black" : "text-gray-400 hover:text-black dark:hover:text-white")}
            >
              Week
            </button>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center bg-white border border-black/5 rounded-2xl overflow-hidden">
+          <div className="flex items-center bg-white dark:bg-zinc-900 border border-black/5 dark:border-white/5 rounded-2xl overflow-hidden">
             <button 
               onClick={() => setCurrentMonth(view === 'month' ? subMonths(currentMonth, 1) : subWeeks(currentMonth, 1))}
-              className="p-3 hover:bg-gray-50 transition-colors"
+              className="p-3 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors text-black dark:text-white"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <div className="px-4 py-2 border-x border-black/5 bg-gray-50/50">
+            <div className="px-4 py-2 border-x border-black/5 dark:border-white/5 bg-gray-50/50 dark:bg-zinc-800/50">
                <button 
                 onClick={() => setCurrentMonth(new Date())}
-                className="text-[10px] font-black uppercase tracking-widest"
+                className="text-[10px] font-black uppercase tracking-widest text-black dark:text-white"
                >
                  Today
                </button>
             </div>
             <button 
               onClick={() => setCurrentMonth(view === 'month' ? addMonths(currentMonth, 1) : addWeeks(currentMonth, 1))}
-              className="p-3 hover:bg-gray-50 transition-colors"
+              className="p-3 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors text-black dark:text-white"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
           </div>
           <button 
             onClick={() => setShowAddModal(true)}
-            className="bg-black text-white p-3 rounded-2xl hover:scale-110 active:scale-95 transition-transform shadow-xl"
+            className="bg-black dark:bg-white text-white dark:text-black p-3 rounded-2xl hover:scale-110 active:scale-95 transition-transform shadow-xl"
           >
             <Plus className="w-6 h-6" />
           </button>
@@ -354,9 +354,9 @@ export default function Calendar({ user, profile }: { user: User, profile: any }
         days.push(
           <div
             className={cn(
-              "relative min-h-[120px] bg-white border border-black/[0.03] p-3 transition-all cursor-pointer group hover:bg-gray-50/50",
-              isSelected && "ring-2 ring-black/10 z-10",
-              isOtherMonth && "bg-gray-50/30 opacity-40 grayscale"
+              "relative min-h-[120px] bg-white dark:bg-zinc-900 border border-black/[0.03] dark:border-white/[0.03] p-3 transition-all cursor-pointer group hover:bg-gray-50/50 dark:hover:bg-zinc-800",
+              isSelected && "ring-2 ring-black/10 dark:ring-white/10 z-10",
+              isOtherMonth && "bg-gray-50/30 dark:bg-zinc-950/50 opacity-40 grayscale"
             )}
             key={day.toString()}
             onClick={() => setSelectedDate(cloneDay)}
@@ -364,12 +364,12 @@ export default function Calendar({ user, profile }: { user: User, profile: any }
             <div className="flex items-center justify-between">
                <span className={cn(
                  "text-sm font-bold w-7 h-7 flex items-center justify-center rounded-lg",
-                 isToday ? "bg-black text-white" : "text-gray-900"
+                 isToday ? "bg-black dark:bg-white text-white dark:text-black" : "text-gray-900 dark:text-gray-100"
                )}>
                  {formattedDate}
                </span>
                {dayEvents.length > 0 && (
-                 <span className="text-[10px] font-black text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+                 <span className="text-[10px] font-black text-blue-500 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-100 dark:border-blue-500/20">
                     {dayEvents.length} Event{dayEvents.length > 1 && 's'}
                  </span>
                )}
@@ -380,20 +380,20 @@ export default function Calendar({ user, profile }: { user: User, profile: any }
                 <div 
                   key={event.id} 
                   onClick={(e) => { e.stopPropagation(); setSelectedEvent(event); }}
-                  className="bg-black/5 px-2 py-1.5 rounded-lg border border-black/5 flex items-center gap-2 hover:bg-black hover:text-white transition-all overflow-hidden"
+                  className="bg-black/5 dark:bg-white/5 px-2 py-1.5 rounded-lg border border-black/5 dark:border-white/5 flex items-center gap-2 hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black transition-all overflow-hidden"
                 >
                   <div className="w-1.5 h-1.5 bg-blue-500 rounded-full shrink-0" />
-                  <span className="text-[10px] font-bold truncate leading-none">{event.title}</span>
+                  <span className="text-[10px] font-bold truncate leading-none text-black dark:text-white group-hover:text-inherit">{event.title}</span>
                 </div>
               ))}
               {dayEvents.length > 3 && (
-                <div className="text-[8px] font-black text-gray-400 pl-2">+{dayEvents.length - 3} More</div>
+                <div className="text-[8px] font-black text-gray-400 dark:text-gray-500 pl-2">+{dayEvents.length - 3} More</div>
               )}
             </div>
 
             <button 
               onClick={(e) => { e.stopPropagation(); setDate(format(cloneDay, 'yyyy-MM-dd')); setShowAddModal(true); }}
-              className="absolute bottom-2 right-2 p-2 bg-white rounded-lg border border-black/5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black hover:text-white"
+              className="absolute bottom-2 right-2 p-2 bg-white dark:bg-zinc-800 rounded-lg border border-black/5 dark:border-white/5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black text-black dark:text-white"
             >
               <Plus className="w-3 h-3" />
             </button>
@@ -419,7 +419,7 @@ export default function Calendar({ user, profile }: { user: User, profile: any }
 
     return (
       <div className="space-y-4">
-        <div className="bg-black text-white p-4 rounded-2xl flex items-center justify-between">
+        <div className="bg-black dark:bg-zinc-800 text-white p-4 rounded-2xl flex items-center justify-between">
            <span className="text-xs font-black uppercase tracking-widest">ISO Week {weekNumber}</span>
            <span className="text-xs opacity-60 italic serif">{format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}</span>
         </div>
@@ -430,14 +430,14 @@ export default function Calendar({ user, profile }: { user: User, profile: any }
 
             return (
               <div key={idx} className={cn(
-                "bg-white p-6 rounded-[2.5rem] border border-black/5 min-h-[300px] flex flex-col space-y-4",
-                isToday && "ring-2 ring-black bg-gray-50"
+                "bg-white dark:bg-zinc-900 p-6 rounded-[2.5rem] border border-black/5 dark:border-white/5 min-h-[300px] flex flex-col space-y-4",
+                isToday && "ring-2 ring-black dark:ring-white bg-gray-50 dark:bg-zinc-800"
               )}>
-                <div className="text-center pb-4 border-b border-black/[0.03]">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{format(day, 'EEE')}</p>
+                <div className="text-center pb-4 border-b border-black/[0.03] dark:border-white/[0.05]">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">{format(day, 'EEE')}</p>
                   <p className={cn(
                     "text-2xl font-black italic serif",
-                    isToday ? "text-blue-600" : "text-black"
+                    isToday ? "text-blue-600 dark:text-blue-400" : "text-black dark:text-white"
                   )}>{format(day, 'd')}</p>
                 </div>
 
@@ -446,18 +446,18 @@ export default function Calendar({ user, profile }: { user: User, profile: any }
                     <div 
                       key={event.id}
                       onClick={() => setSelectedEvent(event)}
-                      className="bg-gray-50 p-4 rounded-2xl border border-black/5 hover:border-black transition-all cursor-pointer group"
+                      className="bg-gray-50 dark:bg-zinc-800 p-4 rounded-2xl border border-black/5 dark:border-white/5 hover:border-black dark:hover:border-white transition-all cursor-pointer group"
                     >
-                      <span className="text-[8px] font-black text-blue-500 uppercase tracking-widest block mb-1">{event.type}</span>
-                      <h4 className="text-xs font-black truncate">{event.title}</h4>
+                      <span className="text-[8px] font-black text-blue-500 dark:text-blue-400 uppercase tracking-widest block mb-1">{event.type}</span>
+                      <h4 className="text-xs font-black truncate text-black dark:text-white">{event.title}</h4>
                       <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity flex justify-end">
-                        <ChevronRight className="w-3 h-3" />
+                        <ChevronRight className="w-3 h-3 text-black dark:text-white" />
                       </div>
                     </div>
                   ))}
                   <button 
                     onClick={() => { setDate(format(day, 'yyyy-MM-dd')); setShowAddModal(true); }}
-                    className="w-full py-4 border border-dashed border-gray-200 rounded-2xl flex items-center justify-center text-gray-300 hover:text-black hover:border-black transition-all"
+                    className="w-full py-4 border border-dashed border-gray-200 dark:border-zinc-700 rounded-2xl flex items-center justify-center text-gray-300 dark:text-gray-600 hover:text-black dark:hover:text-white hover:border-black dark:hover:border-white transition-all"
                   >
                     <Plus className="w-5 h-5" />
                   </button>
@@ -474,7 +474,7 @@ export default function Calendar({ user, profile }: { user: User, profile: any }
     <div className="space-y-10">
       {renderHeader()}
 
-      <div className="bg-gray-50/50 p-4 rounded-[3rem] border border-black/5">
+      <div className="bg-gray-50/50 dark:bg-black/50 p-4 rounded-[3rem] border border-black/5 dark:border-white/5">
         {view === 'month' ? (
           <>
             {renderDays()}
@@ -487,34 +487,34 @@ export default function Calendar({ user, profile }: { user: User, profile: any }
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="lg:col-span-1 space-y-8">
-           <div className="bg-white p-10 rounded-[3rem] border border-black/5 shadow-sm space-y-6">
-              <h3 className="text-xl font-bold italic serif tracking-tight flex items-center gap-3">
+           <div className="bg-white dark:bg-zinc-900 p-10 rounded-[3rem] border border-black/5 dark:border-white/5 shadow-sm space-y-6">
+              <h3 className="text-xl font-bold italic serif tracking-tight flex items-center gap-3 text-black dark:text-white">
                 <Star className="w-5 h-5 text-yellow-400" /> Key Anniversaries
               </h3>
               <div className="space-y-4">
                 {[
-                  { title: "Wedding Anniversary", date: "June 15", color: "bg-pink-100 text-pink-600" },
-                  { title: "Graduation: Sarah", date: "Sept 22", color: "bg-blue-100 text-blue-600" },
-                  { title: "Grandma's 80th", date: "Jan 12", color: "bg-orange-100 text-orange-600" }
+                  { title: "Wedding Anniversary", date: "June 15", color: "bg-pink-100 dark:bg-pink-500/10 text-pink-600 dark:text-pink-400" },
+                  { title: "Graduation: Sarah", date: "Sept 22", color: "bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400" },
+                  { title: "Grandma's 80th", date: "Jan 12", color: "bg-orange-100 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400" }
                 ].map((ann, i) => (
-                  <div key={i} className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-black/[0.02]">
+                  <div key={i} className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-2xl border border-black/[0.02] dark:border-white/5">
                     <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", ann.color)}>
                       <Star className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="text-xs font-bold">{ann.title}</p>
-                      <p className="text-[10px] font-black uppercase text-gray-400 mt-0.5">{ann.date}</p>
+                      <p className="text-xs font-bold text-black dark:text-white">{ann.title}</p>
+                      <p className="text-[10px] font-black uppercase text-gray-400 dark:text-gray-500 mt-0.5">{ann.date}</p>
                     </div>
                   </div>
                 ))}
               </div>
            </div>
 
-           <div className="bg-black text-white p-10 rounded-[3rem] shadow-2xl relative overflow-hidden">
+           <div className="bg-black dark:bg-zinc-800 text-white p-10 rounded-[3rem] shadow-2xl relative overflow-hidden">
               <div className="relative z-10">
                 <Bell className="w-10 h-10 text-blue-400 mb-6 animate-bounce" />
-                <h4 className="text-xl font-bold italic serif mb-4">Notification Logic</h4>
-                <p className="text-xs text-white/50 font-light leading-relaxed">
+                <h4 className="text-xl font-bold italic serif mb-4 text-white">Notification Logic</h4>
+                <p className="text-xs text-white/50 dark:text-gray-400 font-light leading-relaxed">
                   System triggers automatic pulses at:
                   <br />• 7 Days Before: Strategy Warning
                   <br />• 3 Days Before: Preparation Check
@@ -527,7 +527,7 @@ export default function Calendar({ user, profile }: { user: User, profile: any }
 
         <div className="lg:col-span-2 space-y-8">
            <div className="flex items-center justify-between px-2">
-             <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400">Upcoming Missions</h3>
+             <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">Upcoming Missions</h3>
            </div>
 
            <div className="grid grid-cols-1 gap-4">
@@ -539,29 +539,29 @@ export default function Calendar({ user, profile }: { user: User, profile: any }
                  <div 
                    key={event.id}
                    onClick={() => setSelectedEvent(event)}
-                   className="bg-white p-8 rounded-[2.5rem] border border-black/5 shadow-sm group hover:border-black transition-all flex items-center justify-between cursor-pointer"
+                   className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-black/5 dark:border-white/5 shadow-sm group hover:border-black dark:hover:border-white transition-all flex items-center justify-between cursor-pointer"
                  >
                     <div className="flex items-start gap-6">
-                       <div className="w-20 h-20 bg-gray-50 rounded-3xl flex flex-col items-center justify-center border border-black/5 overflow-hidden group-hover:bg-black group-hover:text-white transition-colors">
+                       <div className="w-20 h-20 bg-gray-50 dark:bg-zinc-800 rounded-3xl flex flex-col items-center justify-center border border-black/5 dark:border-white/5 overflow-hidden group-hover:bg-black dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-black transition-colors text-black dark:text-white">
                           <span className="text-[10px] font-black uppercase tracking-widest opacity-60">{format(parseISO(event.date), 'MMM')}</span>
                           <span className="text-3xl font-black italic serif">{format(parseISO(event.date), 'd')}</span>
                        </div>
                        <div className="space-y-1 pt-2">
-                          <span className="text-[8px] font-black text-blue-500 uppercase tracking-widest">{event.type}</span>
-                          <h4 className="text-2xl font-bold tracking-tight">{event.title}</h4>
-                          <div className="flex items-center gap-3 text-xs text-gray-400 font-medium">
+                          <span className="text-[8px] font-black text-blue-500 dark:text-blue-400 uppercase tracking-widest">{event.type}</span>
+                          <h4 className="text-2xl font-bold tracking-tight text-black dark:text-white">{event.title}</h4>
+                          <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500 font-medium">
                              <div className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {event.venue || 'TBD'}</div>
                           </div>
                        </div>
                     </div>
-                    <ChevronRight className="w-6 h-6 text-gray-200 group-hover:text-black group-hover:translate-x-2 transition-all" />
+                    <ChevronRight className="w-6 h-6 text-gray-200 dark:text-gray-700 group-hover:text-black dark:group-hover:text-white group-hover:translate-x-2 transition-all" />
                  </div>
                ))
              }
              {events.length === 0 && (
-               <div className="bg-white p-20 rounded-[3rem] border border-black/5 text-center flex flex-col items-center gap-4 opacity-50">
-                  <CalendarIcon className="w-12 h-12 text-gray-300" />
-                  <p className="text-lg italic font-light italic serif">The horizon is clear.</p>
+               <div className="bg-white dark:bg-zinc-900 p-20 rounded-[3rem] border border-black/5 dark:border-white/5 text-center flex flex-col items-center gap-4 opacity-50">
+                  <CalendarIcon className="w-12 h-12 text-gray-300 dark:text-gray-600" />
+                  <p className="text-lg italic font-light italic serif text-black dark:text-white">The horizon is clear.</p>
                </div>
              )}
            </div>
@@ -613,31 +613,31 @@ export default function Calendar({ user, profile }: { user: User, profile: any }
               <div className="p-10 space-y-10">
                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                     <div className="space-y-1">
-                       <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Date</p>
-                       <p className="text-sm font-bold flex items-center gap-2"><CalendarIcon className="w-4 h-4" /> {format(parseISO(selectedEvent.date), 'MMM d, yyyy')}</p>
+                       <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Date</p>
+                       <p className="text-sm font-bold flex items-center gap-2 text-black dark:text-white"><CalendarIcon className="w-4 h-4" /> {format(parseISO(selectedEvent.date), 'MMM d, yyyy')}</p>
                     </div>
                     <div className="space-y-1">
-                       <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Venue</p>
-                       <p className="text-sm font-bold flex items-center gap-2"><MapPin className="w-4 h-4" /> {selectedEvent.venue || 'TBD'}</p>
+                       <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Venue</p>
+                       <p className="text-sm font-bold flex items-center gap-2 text-black dark:text-white"><MapPin className="w-4 h-4" /> {selectedEvent.venue || 'TBD'}</p>
                     </div>
                     <div className="space-y-1">
-                       <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Budget</p>
-                       <p className="text-sm font-bold flex items-center gap-2"><DollarSign className="w-4 h-4 text-green-500" /> {selectedEvent.budget?.toLocaleString()}</p>
+                       <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Budget</p>
+                       <p className="text-sm font-bold flex items-center gap-2 text-black dark:text-white"><DollarSign className="w-4 h-4 text-green-500" /> {selectedEvent.budget?.toLocaleString()}</p>
                     </div>
                     <div className="space-y-1">
-                       <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Guests</p>
-                       <p className="text-sm font-bold flex items-center gap-2"><UsersIcon className="w-4 h-4" /> {selectedEvent.externalGuests?.length ? `${selectedEvent.externalGuests.length} Guests` : 'Family Group'}</p>
+                       <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Guests</p>
+                       <p className="text-sm font-bold flex items-center gap-2 text-black dark:text-white"><UsersIcon className="w-4 h-4" /> {selectedEvent.externalGuests?.length ? `${selectedEvent.externalGuests.length} Guests` : 'Family Group'}</p>
                     </div>
                  </div>
 
                  {selectedEvent.externalGuests && selectedEvent.externalGuests.length > 0 && (
                    <div className="space-y-4">
-                      <h4 className="text-xs font-black uppercase tracking-widest text-gray-300">Invite List</h4>
+                      <h4 className="text-xs font-black uppercase tracking-widest text-gray-300 dark:text-gray-600">Invite List</h4>
                       <div className="flex flex-wrap gap-2">
                          {selectedEvent.externalGuests.map((g, i) => (
-                           <div key={i} className="bg-gray-50 px-4 py-2 rounded-xl text-xs flex flex-col">
-                              <span className="font-bold">{g.name}</span>
-                              <span className="text-[10px] text-gray-400">{g.email}</span>
+                           <div key={i} className="bg-gray-50 dark:bg-zinc-800 px-4 py-2 rounded-xl text-xs flex flex-col border border-black/5 dark:border-white/5">
+                              <span className="font-bold text-black dark:text-white">{g.name}</span>
+                              <span className="text-[10px] text-gray-400 dark:text-gray-500">{g.email}</span>
                            </div>
                          ))}
                       </div>
@@ -645,8 +645,8 @@ export default function Calendar({ user, profile }: { user: User, profile: any }
                  )}
 
                  <div className="space-y-4">
-                    <h4 className="text-xs font-black uppercase tracking-widest text-gray-300">Planned Activities</h4>
-                    <p className="text-sm text-gray-600 leading-relaxed font-medium whitespace-pre-wrap">
+                    <h4 className="text-xs font-black uppercase tracking-widest text-gray-300 dark:text-gray-600">Planned Activities</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed font-medium whitespace-pre-wrap">
                       {selectedEvent.activities || 'No activities detailed yet. Time to brainstorm together?'}
                     </p>
                  </div>
@@ -656,14 +656,14 @@ export default function Calendar({ user, profile }: { user: User, profile: any }
                       href={getGoogleCalendarLink(selectedEvent)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 bg-black text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-black/20 text-center flex items-center justify-center"
+                      className="flex-1 bg-black dark:bg-white text-white dark:text-black py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-black/20 text-center flex items-center justify-center"
                     >
                       Sync to Google
                     </a>
                     {!selectedEvent.isTrip && (
                       <button 
                         onClick={() => openEditModal(selectedEvent)}
-                        className="px-6 py-4 bg-gray-50 text-gray-600 rounded-2xl hover:bg-gray-100 transition-all shadow-sm font-black uppercase text-xs tracking-widest"
+                        className="px-6 py-4 bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 rounded-2xl hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all shadow-sm font-black uppercase text-xs tracking-widest"
                       >
                         Edit
                       </button>
@@ -671,7 +671,7 @@ export default function Calendar({ user, profile }: { user: User, profile: any }
                     {!selectedEvent.isTrip && (
                       <button 
                         onClick={() => handleDeleteEvent(selectedEvent.id)}
-                        className="p-4 bg-red-50 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all shadow-lg shadow-red-500/5 group"
+                        className="p-4 bg-red-50 dark:bg-red-500/10 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all shadow-lg shadow-red-500/5 group"
                       >
                         <Trash2 className="w-6 h-6 group-hover:scale-110 transition-transform" />
                       </button>
@@ -696,47 +696,47 @@ export default function Calendar({ user, profile }: { user: User, profile: any }
               initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 20 }}
-              className="bg-white w-full max-w-xl rounded-[3rem] p-10 shadow-2xl relative space-y-8"
+              className="bg-white dark:bg-zinc-900 w-full max-w-xl rounded-[3rem] p-10 shadow-2xl relative space-y-8"
             >
               <button 
                 onClick={() => setShowAddModal(false)}
-                className="absolute top-8 right-8 text-gray-300 hover:text-black transition-colors"
+                className="absolute top-8 right-8 text-gray-300 dark:text-gray-600 hover:text-black dark:hover:text-white transition-colors"
               >
                 <X className="w-8 h-8" />
               </button>
 
               <div>
-                <h3 className="text-3xl font-black italic serif tracking-tight">Construct Event</h3>
-                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-2">Initialize new family timeline node.</p>
+                <h3 className="text-3xl font-black italic serif tracking-tight text-black dark:text-white">Construct Event</h3>
+                <p className="text-xs text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest mt-2">Initialize new family timeline node.</p>
               </div>
 
               <div className="space-y-6">
                  <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-2">Event Title</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 px-2">Event Title</label>
                     <input 
                       placeholder="e.g. Grandma's 80th Bash"
                       value={title}
                       onChange={e => setTitle(e.target.value)}
-                      className="w-full bg-gray-50 border border-black/5 p-5 rounded-2xl font-bold focus:ring-1 focus:ring-black/10 outline-none"
+                      className="w-full bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 p-5 rounded-2xl font-bold focus:ring-1 focus:ring-black/10 dark:focus:ring-white/10 outline-none text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600"
                     />
                  </div>
 
                  <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-1">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-2">Date</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 px-2">Date</label>
                         <input 
                           type="date"
                           value={date}
                           onChange={e => setDate(e.target.value)}
-                          className="w-full bg-gray-50 border border-black/5 p-5 rounded-2xl font-bold focus:ring-1 focus:ring-black/10 outline-none"
+                          className="w-full bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 p-5 rounded-2xl font-bold focus:ring-1 focus:ring-black/10 dark:focus:ring-white/10 outline-none text-black dark:text-white"
                         />
                     </div>
                     <div className="space-y-1">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-2">Type</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 px-2">Type</label>
                         <select 
                           value={type}
                           onChange={e => setType(e.target.value)}
-                          className="w-full bg-gray-50 border border-black/5 p-5 rounded-2xl font-bold focus:ring-1 focus:ring-black/10 outline-none appearance-none"
+                          className="w-full bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 p-5 rounded-2xl font-bold focus:ring-1 focus:ring-black/10 dark:focus:ring-white/10 outline-none appearance-none text-black dark:text-white"
                         >
                           <option>Birthday</option>
                           <option>Anniversary</option>
@@ -750,37 +750,37 @@ export default function Calendar({ user, profile }: { user: User, profile: any }
 
                  <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-1">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-2">Venue</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 px-2">Venue</label>
                         <input 
                           placeholder="Location"
                           value={venue}
                           onChange={e => setVenue(e.target.value)}
-                          className="w-full bg-gray-50 border border-black/5 p-5 rounded-2xl font-bold focus:ring-1 focus:ring-black/10 outline-none"
+                          className="w-full bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 p-5 rounded-2xl font-bold focus:ring-1 focus:ring-black/10 dark:focus:ring-white/10 outline-none text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600"
                         />
                     </div>
                     <div className="space-y-1">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-2">Budget (KES)</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 px-2">Budget (KES)</label>
                         <input 
                           type="number"
                           placeholder="0.00"
                           value={budget}
                           onChange={e => setBudget(e.target.value)}
-                          className="w-full bg-gray-50 border border-black/5 p-5 rounded-2xl font-bold focus:ring-1 focus:ring-black/10 outline-none"
+                          className="w-full bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 p-5 rounded-2xl font-bold focus:ring-1 focus:ring-black/10 dark:focus:ring-white/10 outline-none text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600"
                         />
                     </div>
                  </div>
 
                  <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-2">Banner Asset</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 px-2">Banner Asset</label>
                     <div className="flex flex-col md:flex-row gap-3">
                       <input 
                         placeholder="https://images.unsplash.com/..."
                         value={bannerURL}
                         onChange={e => setBannerURL(e.target.value)}
-                        className="flex-1 bg-gray-50 border border-black/5 p-4 rounded-2xl font-bold focus:ring-1 focus:ring-black/10 outline-none text-sm"
+                        className="flex-1 bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 p-4 rounded-2xl font-bold focus:ring-1 focus:ring-black/10 dark:focus:ring-white/10 outline-none text-sm text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600"
                       />
                       <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-black uppercase text-gray-300">OR</span>
+                        <span className="text-[10px] font-black uppercase text-gray-300 dark:text-gray-600">OR</span>
                         <input 
                           type="file"
                           accept="image/*"
@@ -789,30 +789,30 @@ export default function Calendar({ user, profile }: { user: User, profile: any }
                               handleImageUpload(e.target.files[0], setBannerURL);
                             }
                           }}
-                          className="text-xs max-w-[180px] file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100 transition-all cursor-pointer"
+                          className="text-xs max-w-[180px] file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-gray-50 dark:file:bg-zinc-700 file:text-gray-700 dark:file:text-white hover:file:bg-gray-100 dark:hover:file:bg-zinc-600 transition-all cursor-pointer text-gray-500 dark:text-gray-400"
                         />
                       </div>
                     </div>
                  </div>
 
                  <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-2">External Invites</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 px-2">External Invites</label>
                     <div className="flex gap-2">
                        <input 
                         placeholder="Name"
                         value={externalGuestName}
                         onChange={e => setExternalGuestName(e.target.value)}
-                        className="flex-1 bg-gray-50 border border-black/5 p-4 rounded-2xl font-bold text-sm focus:ring-1 focus:ring-black/10 outline-none"
+                        className="flex-1 bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 p-4 rounded-2xl font-bold text-sm focus:ring-1 focus:ring-black/10 dark:focus:ring-white/10 outline-none text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600"
                       />
                       <input 
                         placeholder="Email"
                         value={externalGuestEmail}
                         onChange={e => setExternalGuestEmail(e.target.value)}
-                        className="flex-1 bg-gray-50 border border-black/5 p-4 rounded-2xl font-bold text-sm focus:ring-1 focus:ring-black/10 outline-none"
+                        className="flex-1 bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 p-4 rounded-2xl font-bold text-sm focus:ring-1 focus:ring-black/10 dark:focus:ring-white/10 outline-none text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600"
                       />
                       <button 
                         onClick={addExternalGuest}
-                        className="bg-black text-white px-4 rounded-2xl hover:scale-105 active:scale-95 transition-transform shrink-0"
+                        className="bg-black dark:bg-white text-white dark:text-black px-4 rounded-2xl hover:scale-105 active:scale-95 transition-transform shrink-0"
                       >
                         <Plus className="w-5 h-5" />
                       </button>
@@ -820,10 +820,10 @@ export default function Calendar({ user, profile }: { user: User, profile: any }
                     {externalGuests.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-3 px-2">
                          {externalGuests.map((g, i) => (
-                           <div key={i} className="flex items-center gap-2 bg-black text-white px-3 py-1.5 rounded-full text-[10px] font-bold">
+                           <div key={i} className="flex items-center gap-2 bg-black dark:bg-white text-white dark:text-black px-3 py-1.5 rounded-full text-[10px] font-bold">
                              {g.name} 
                              <X 
-                               className="w-3 h-3 cursor-pointer hover:text-red-400" 
+                               className="w-3 h-3 cursor-pointer hover:text-red-400 dark:hover:text-red-500" 
                                onClick={() => setExternalGuests(externalGuests.filter((_, idx) => idx !== i))}
                              />
                            </div>
@@ -833,18 +833,18 @@ export default function Calendar({ user, profile }: { user: User, profile: any }
                  </div>
 
                  <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-2">Activities</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 px-2">Activities</label>
                     <textarea 
                       placeholder="Planned events, games, dinner menu..."
                       value={activities}
                       onChange={e => setActivities(e.target.value)}
-                      className="w-full bg-gray-50 border border-black/5 p-5 rounded-2xl font-bold min-h-[100px] focus:ring-1 focus:ring-black/10 outline-none leading-relaxed"
+                      className="w-full bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 p-5 rounded-2xl font-bold min-h-[100px] focus:ring-1 focus:ring-black/10 dark:focus:ring-white/10 outline-none leading-relaxed text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600"
                     />
                  </div>
 
                  <button 
                   onClick={handleSaveEvent}
-                  className="w-full bg-black text-white py-6 rounded-3xl font-black uppercase text-xs tracking-widest hover:scale-[1.01] active:scale-95 transition-all shadow-2xl shadow-black/20"
+                  className="w-full bg-black dark:bg-white text-white dark:text-black py-6 rounded-3xl font-black uppercase text-xs tracking-widest hover:scale-[1.01] active:scale-95 transition-all shadow-2xl shadow-black/20"
                  >
                    {editEventId ? 'Update Event Node' : 'Launch Event Node'}
                  </button>

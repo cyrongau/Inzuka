@@ -281,12 +281,12 @@ export default function Dashboard({ user, profile }: { user: User, profile: any 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Activity */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-[2.5rem] p-8 border border-black/5 shadow-sm">
+          <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-black/5 dark:border-white/5 shadow-sm">
             <div className="flex items-center justify-between mb-8">
-              <h3 className="text-xl font-semibold flex items-center gap-2 italic serif">
+              <h3 className="text-xl font-semibold flex items-center gap-2 italic serif text-black dark:text-white">
                 <Activity className="w-5 h-5" /> My Schedule
               </h3>
-              <button className="text-sm font-medium text-black hover:underline">View All</button>
+              <button className="text-sm font-medium text-black dark:text-white hover:underline">View All</button>
             </div>
             <div className="space-y-4">
               {myChores.length === 0 ? (

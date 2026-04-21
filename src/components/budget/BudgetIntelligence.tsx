@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { scanReceipt, parseTransactionText, ExtractedReceiptData } from '../../services/geminiService';
 import { db } from '../../lib/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 interface BudgetIntelligenceProps {
   userId: string;
@@ -70,9 +70,11 @@ export const BudgetIntelligence: React.FC<BudgetIntelligenceProps> = ({
         amount: scanResult.amount,
         category: scanResult.category,
         description: `${scanResult.merchant} (${scanResult.transactionType})`,
-        date: new Date(scanResult.date).toISOString() || new Date().toISOString(),
+        transactionDate: new Date(scanResult.date).toISOString() || new Date().toISOString(),
+        date: new Date(scanResult.date).toISOString() || new Date().toISOString(), // Keep date for backward compatibility in views
         isPaid: true,
-        source: 'AI Extraction'
+        source: 'AI Extraction',
+        loggedAt: serverTimestamp()
       });
       
       toast.success("Transaction saved to ledger!");
@@ -86,44 +88,44 @@ export const BudgetIntelligence: React.FC<BudgetIntelligenceProps> = ({
   return (
     <div className="w-full space-y-6">
       {/* Mode Toggle */}
-      <div className="flex bg-black/5 p-1 rounded-2xl w-fit mx-auto">
+      <div className="flex bg-black/5 dark:bg-white/5 p-1 rounded-2xl w-fit mx-auto">
         <button 
           onClick={() => setActiveMode('camera')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${activeMode === 'camera' ? 'bg-black text-white shadow-lg' : 'text-gray-400'}`}
+          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${activeMode === 'camera' ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg' : 'text-gray-400 dark:text-gray-500'}`}
         >
           <Camera className="w-4 h-4" /> Receipt
         </button>
         <button 
           onClick={() => setActiveMode('text')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${activeMode === 'text' ? 'bg-black text-white shadow-lg' : 'text-gray-400'}`}
+          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${activeMode === 'text' ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg' : 'text-gray-400 dark:text-gray-500'}`}
         >
           <MessageSquareText className="w-4 h-4" /> Text/SMS
         </button>
       </div>
 
-      <div className="bg-white border-2 border-black p-8 rounded-[3rem] shadow-xl relative overflow-hidden">
+      <div className="bg-white dark:bg-zinc-900 border-2 border-black dark:border-white/10 p-8 rounded-[3rem] shadow-xl relative overflow-hidden">
         <div className="relative z-10 space-y-6">
           <div className="flex items-center justify-between">
-            <div className="space-y-1 text-black">
+            <div className="space-y-1 text-black dark:text-white">
               <h3 className="text-2xl font-bold tracking-tight italic serif">Finance Intelligence</h3>
-              <p className="text-[10px] font-bold text-black/40 uppercase tracking-widest">
+              <p className="text-[10px] font-bold text-black/40 dark:text-white/40 uppercase tracking-widest">
                 {activeMode === 'camera' ? 'Snap Receipts & Invoices' : 'Paste SMS or Text records'}
               </p>
             </div>
-            <div className="w-10 h-10 bg-black text-white rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-black dark:bg-white text-white dark:text-black rounded-xl flex items-center justify-center">
               <Sparkles className="w-5 h-5" />
             </div>
           </div>
 
           {activeMode === 'camera' ? (
             <label className="block w-full cursor-pointer group">
-              <div className="bg-gray-50 border-2 border-dashed border-black/10 rounded-2xl p-8 text-center space-y-3 group-hover:bg-gray-100 transition-all">
-                <div className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-black/5 mx-auto flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Camera className="w-6 h-6 text-black/40" />
+              <div className="bg-gray-50 dark:bg-zinc-800/50 border-2 border-dashed border-black/10 dark:border-white/5 rounded-2xl p-8 text-center space-y-3 group-hover:bg-gray-100 dark:group-hover:bg-zinc-800 transition-all">
+                <div className="w-12 h-12 bg-white dark:bg-zinc-800 rounded-2xl shadow-sm border border-black/5 dark:border-white/5 mx-auto flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Camera className="w-6 h-6 text-black/40 dark:text-white/40" />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm font-bold text-black">Upload Receipt</p>
-                  <p className="text-[9px] text-black/40 font-medium uppercase tracking-tighter">Auto-extracts Merchant, Amount & Date</p>
+                  <p className="text-sm font-bold text-black dark:text-white">Upload Receipt</p>
+                  <p className="text-[9px] text-black/40 dark:text-white/40 font-medium uppercase tracking-tighter">Auto-extracts Merchant, Amount & Date</p>
                 </div>
                 <input type="file" accept="image/*" className="hidden" onChange={handleReceiptScan} />
               </div>
@@ -134,12 +136,12 @@ export const BudgetIntelligence: React.FC<BudgetIntelligenceProps> = ({
                 value={rawText}
                 onChange={e => setRawText(e.target.value)}
                 placeholder="Paste your M-Pesa SMS or transaction text here..."
-                className="w-full bg-gray-50 border-2 border-dashed border-black/10 rounded-2xl p-6 text-sm font-medium focus:border-black/30 transition-all outline-none min-h-[120px]"
+                className="w-full bg-gray-50 dark:bg-zinc-800/50 border-2 border-dashed border-black/10 dark:border-white/5 rounded-2xl p-6 text-sm font-medium focus:border-black/30 dark:focus:border-white/20 transition-all outline-none min-h-[120px] text-black dark:text-white"
               />
               <button 
                 onClick={handleTextParse}
                 disabled={isScanning || !rawText.trim()}
-                className="w-full bg-black text-white py-4 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-gray-900 transition-all disabled:opacity-50"
+                className="w-full bg-black dark:bg-white text-white dark:text-black py-4 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-gray-900 dark:hover:bg-gray-100 transition-all disabled:opacity-50"
               >
                 {isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Brain className="w-4 h-4" />}
                 Analyze Text
@@ -148,9 +150,9 @@ export const BudgetIntelligence: React.FC<BudgetIntelligenceProps> = ({
           )}
 
           {isScanning && activeMode === 'camera' && (
-            <div className="flex items-center justify-center gap-3 p-4 bg-black/5 rounded-2xl animate-pulse">
-              <Brain className="w-5 h-5 text-black/40" />
-              <p className="text-[10px] font-bold uppercase tracking-widest text-black/60">AI Extraction in Progress...</p>
+            <div className="flex items-center justify-center gap-3 p-4 bg-black/5 dark:bg-white/5 rounded-2xl animate-pulse">
+              <Brain className="w-5 h-5 text-black/40 dark:text-white/40" />
+              <p className="text-[10px] font-bold uppercase tracking-widest text-black/60 dark:text-white/60">AI Extraction in Progress...</p>
             </div>
           )}
         </div>
