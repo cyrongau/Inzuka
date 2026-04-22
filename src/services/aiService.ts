@@ -8,13 +8,14 @@ export interface TransactionExtraction {
   amount: number;
   reference: string;
   currency: string;
+  category: string;
 }
 
 export async function extractTransactionFromText(text: string): Promise<TransactionExtraction | null> {
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Extract transaction details (sender name, date, amount as number, reference number, currency) from this SMS or text message. If details are missing, provide best guesses or null. Return JSON only.\n\nMessage:\n${text}`,
+      model: "gemini-1.5-flash",
+      contents: `Extract transaction details (sender name, date, amount as number, reference number, currency, and category like "Savings", "Loan Repayment", "Contribution", "Business") from this SMS or text message. If details are missing, provide best guesses or null. Return JSON only.\n\nMessage:\n${text}`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -25,8 +26,9 @@ export async function extractTransactionFromText(text: string): Promise<Transact
             amount: { type: Type.NUMBER },
             reference: { type: Type.STRING },
             currency: { type: Type.STRING },
+            category: { type: Type.STRING },
           },
-          required: ["name", "amount", "reference"],
+          required: ["name", "amount", "reference", "category"],
         },
       },
     });
@@ -42,7 +44,7 @@ export async function extractTransactionFromText(text: string): Promise<Transact
 export async function extractTransactionFromImage(base64Image: string, mimeType: string): Promise<TransactionExtraction | null> {
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-1.5-flash",
       contents: [
         {
           inlineData: {
@@ -51,7 +53,7 @@ export async function extractTransactionFromImage(base64Image: string, mimeType:
           },
         },
         {
-          text: "Analyze this receipt or transaction confirmation image and extract: sender name, date, amount as a number, reference number, and currency. Return JSON only.",
+          text: "Analyze this receipt or transaction confirmation image and extract: sender name, date, amount as a number, reference number, currency, and category (e.g. 'Savings', 'Loan Repayment'). Return JSON only.",
         },
       ],
       config: {
@@ -64,8 +66,9 @@ export async function extractTransactionFromImage(base64Image: string, mimeType:
             amount: { type: Type.NUMBER },
             reference: { type: Type.STRING },
             currency: { type: Type.STRING },
+            category: { type: Type.STRING },
           },
-          required: ["name", "amount", "reference"],
+          required: ["name", "amount", "reference", "category"],
         },
       },
     });

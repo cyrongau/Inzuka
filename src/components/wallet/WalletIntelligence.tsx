@@ -28,13 +28,22 @@ export const WalletIntelligence: React.FC<WalletIntelligenceProps> = ({
         const reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = async () => {
-            const base64 = (reader.result as string).split(',')[1];
-            const data = await scanReceipt(base64, file.type);
-            setReviewData({ ...data, source: 'receipt_scan' });
+            try {
+              const base64 = (reader.result as string).split(',')[1];
+              const data = await scanReceipt(base64, file.type);
+              setReviewData({ ...data, source: 'receipt_scan', editMerchant: data.merchant || data.description, editCategory: data.category || 'misc' });
+            } catch (e) {
+              console.error(e);
+            } finally {
+              setIsProcessing(false);
+            }
+        };
+        reader.onerror = () => {
+            console.error("Failed to read file");
+            setIsProcessing(false);
         };
     } catch (e) {
         console.error(e);
-    } finally {
         setIsProcessing(false);
     }
   };
@@ -45,7 +54,7 @@ export const WalletIntelligence: React.FC<WalletIntelligenceProps> = ({
     setShowSmsModal(false);
     try {
         const data = await parseTransactionText(smsText);
-        setReviewData({ ...data, source: 'sms_parse' });
+        setReviewData({ ...data, source: 'sms_parse', editMerchant: data.merchant || data.description, editCategory: data.category || 'misc' });
         setSmsText('');
     } catch (e) {
         console.error(e);
@@ -84,8 +93,8 @@ export const WalletIntelligence: React.FC<WalletIntelligenceProps> = ({
                 amount,
                 type: type,
                 status: 'completed',
-                description: reviewData.description || reviewData.merchant || 'AI Logged Transaction',
-                category: reviewData.category || 'misc',
+                description: reviewData.editMerchant || reviewData.merchant || 'AI Logged Transaction',
+                category: reviewData.editCategory || reviewData.category || 'misc',
                 familyId: familyId || null,
                 createdAt: serverTimestamp()
             });
@@ -115,7 +124,7 @@ export const WalletIntelligence: React.FC<WalletIntelligenceProps> = ({
           
           <div className="grid grid-cols-2 gap-4 relative z-10">
               <label className="block w-full cursor-pointer">
-                  <input type="file" className="hidden" accept="image/*" onChange={e => e.target.files?.[0] && handleOcrScan(e.target.files[0])} disabled={isProcessing} />
+                  <input type="file" className="hidden" capture="environment" accept="image/*" onChange={e => e.target.files?.[0] && handleOcrScan(e.target.files[0])} disabled={isProcessing} />
                   <div className="bg-white text-black py-5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-center hover:bg-gray-100 transition-all cursor-pointer shadow-xl shadow-white/5">
                       Scan Receipt
                   </div>
@@ -207,13 +216,27 @@ export const WalletIntelligence: React.FC<WalletIntelligenceProps> = ({
                     <div className="space-y-6">
                         <div className="flex justify-between items-center group">
                             <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 italic serif">Party</span>
-                            <span className="text-sm font-black italic serif text-black dark:text-white">{reviewData.merchant || reviewData.description || 'Unidentified'}</span>
+                            <input 
+                              type="text" 
+                              value={reviewData.editMerchant}
+                              onChange={(e) => setReviewData({...reviewData, editMerchant: e.target.value})}
+                              className="w-1/2 text-right bg-transparent border-b border-black/10 dark:border-white/10 text-sm font-black italic serif text-black dark:text-white outline-none focus:border-black/50 dark:focus:border-white/50"
+                            />
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 italic serif">Category</span>
-                            <span className="px-5 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-[9px] font-black uppercase tracking-widest shadow-xl">
-                                {reviewData.category || 'Misc'}
-                            </span>
+                            <select 
+                              value={reviewData.editCategory}
+                              onChange={(e) => setReviewData({...reviewData, editCategory: e.target.value})}
+                              className="px-5 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-[9px] font-black uppercase tracking-widest shadow-xl outline-none"
+                            >
+                                <option value="misc">Miscellaneous</option>
+                                <option value="food">Food & Dining</option>
+                                <option value="shopping">Shopping</option>
+                                <option value="utility">Utilities</option>
+                                <option value="rent">Rent & Housing</option>
+                                <option value="transport">Transportation</option>
+                            </select>
                         </div>
                     </div>
                 </div>

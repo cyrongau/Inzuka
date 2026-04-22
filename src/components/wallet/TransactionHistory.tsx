@@ -2,7 +2,18 @@ import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { History, ArrowUpRight, ArrowDownLeft, Edit2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
+
+const safeFormatDate = (dateVal: any, dateFormat: string, fallback: string = 'Date Unknown') => {
+  if (!dateVal) return fallback;
+  try {
+    const d = typeof dateVal.toDate === 'function' ? dateVal.toDate() : new Date(dateVal);
+    if (!isValid(d)) return fallback;
+    return format(d, dateFormat);
+  } catch (e) {
+    return fallback;
+  }
+};
 
 interface TransactionHistoryProps {
   transactions: any[];
@@ -58,18 +69,10 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                        <p className="font-black text-lg tracking-tight text-gray-900 dark:text-white italic serif">{tx.description}</p>
                        <div className="flex flex-col gap-1 mt-1">
                          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-black dark:text-white">
-                           <span className="text-gray-400 dark:text-gray-500">Transacted:</span> {tx.transactionDate ? format(new Date(tx.transactionDate), 'MMM d, yyyy') : (tx.createdAt ? (
-                             typeof tx.createdAt.toDate === 'function' 
-                               ? format(tx.createdAt.toDate(), 'MMM d, yyyy') 
-                               : format(new Date(tx.createdAt), 'MMM d, yyyy')
-                           ) : 'Date Unknown')}
+                           <span className="text-gray-400 dark:text-gray-500">Transacted:</span> {tx.transactionDate ? safeFormatDate(tx.transactionDate, 'MMM d, yyyy') : safeFormatDate(tx.createdAt, 'MMM d, yyyy')}
                          </p>
                          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-gray-400 dark:text-gray-600">
-                           Logged: {tx.createdAt ? (
-                             typeof tx.createdAt.toDate === 'function' 
-                               ? format(tx.createdAt.toDate(), 'MMM d, h:mm a') 
-                               : format(new Date(tx.createdAt), 'MMM d, h:mm a')
-                           ) : 'Pending Resonance'} • <span className="uppercase">{tx.type}</span>
+                           Logged: {safeFormatDate(tx.createdAt, 'MMM d, h:mm a', 'Pending Resonance')} • <span className="uppercase">{tx.type}</span>
                          </p>
                        </div>
                      </div>

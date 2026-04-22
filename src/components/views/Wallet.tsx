@@ -128,30 +128,9 @@ export default function Wallet({ user, profile }: { user: User, profile: any }) 
           await setDoc(walletDocRef, {
             userId: user.uid,
             balance: 0.00,
-            currency: 'KES',
-            isInitialBalanceFixed: true,
-            updatedAt: serverTimestamp()
+            currency: 'KES'
           });
-        } else {
-          const data = snap.data();
-          // Force reconciliation for everyone who hasn't had the fix applied correctly
-          // We check the flag, but also if the balance is exactly 2500 (or higher if they added funds)
-          // while the flag was potentially set but not the balance subtracted.
-          const isSuspicious = data.balance >= 2500 && (!data.isInitialBalanceFixed || data.updatedAt?.seconds === data.createdAt?.seconds);
-          
-          if (!data.isInitialBalanceFixed || isSuspicious) {
-            console.log("Reconciling phantom balance for document:", snap.id);
-            const currentBalance = data.balance || 0;
-            // Subtract exactly 2500 if we haven't already
-            if (!data.isInitialBalanceFixed || currentBalance >= 2500) {
-              await updateDoc(walletDocRef, {
-                balance: Math.max(0, currentBalance - 2500.00),
-                isInitialBalanceFixed: true,
-                updatedAt: serverTimestamp()
-              });
-            }
-          }
-        }
+        } 
       } catch (err) {
         console.error("Wallet initialization failed:", err);
       }
@@ -168,9 +147,13 @@ export default function Wallet({ user, profile }: { user: User, profile: any }) 
     const unsubWallet = onSnapshot(walletDocRef, (snap) => {
       if (snap.exists()) {
         setWallet({ id: snap.id, ...snap.data() });
-        setLoading(false);
-        clearTimeout(safetyTimeout);
+      } else {
+        // If it doesn't exist yet, we still want to clear loading so it doesn't hang
+        // The init routine above will create it and trigger this snapshot again
+        setWallet(null);
       }
+      setLoading(false);
+      clearTimeout(safetyTimeout);
     }, (err) => {
       console.error("Wallet Snapshot error:", err);
       setLoading(false);
@@ -178,11 +161,10 @@ export default function Wallet({ user, profile }: { user: User, profile: any }) 
     });
 
     // Transactions Listener
-    const transRef = collection(db, 'transactions');
-    // Only subscribe to transactions once we know which query to use (family vs personal)
-    // and profile is fully loaded to avoid permission-denied race conditions
-    if (profile === null) return; 
+    // If profile is strictly missing (like empty object vs string), wait
+    if (typeof profile === 'undefined') return;
 
+    const transRef = collection(db, 'transactions');
     const transQ = profile?.familyId 
       ? query(transRef, where('familyId', '==', profile.familyId), limit(50))
       : query(transRef, where('fromUserId', '==', user.uid), limit(50));

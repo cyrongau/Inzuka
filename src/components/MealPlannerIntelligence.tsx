@@ -39,7 +39,7 @@ export const MealPlannerIntelligence: React.FC<MealPlannerIntelligenceProps> = (
       const missingItems: any[] = [];
 
       mealsToday.forEach(mealTitle => {
-        const recipe = recipes.find(r => r.title.toLowerCase() === (mealTitle as string).toLowerCase());
+        const recipe = recipes.find(r => r?.title?.toLowerCase() === (mealTitle as string).toLowerCase());
         if (recipe) {
           const multiplier = (activePlan.servings || 2) / (recipe.servings || 2);
           recipe.ingredients.forEach((req: any) => {

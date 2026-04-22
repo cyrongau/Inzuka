@@ -24,6 +24,10 @@ export const BudgetIntelligence: React.FC<BudgetIntelligenceProps> = ({
   const [scanResult, setScanResult] = useState<ExtractedReceiptData | null>(null);
   const [rawText, setRawText] = useState('');
   const [activeMode, setActiveMode] = useState<'camera' | 'text'>('camera');
+  const [editCategory, setEditCategory] = useState('');
+  const [editMerchant, setEditMerchant] = useState('');
+
+  const PREDEFINED_CATEGORIES = ['rent', 'school_fees', 'utility', 'medical', 'insurance', 'emergency', 'misc', 'transport', 'project', 'gaming', 'food', 'shopping', 'custom'];
 
   const handleReceiptScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -37,6 +41,8 @@ export const BudgetIntelligence: React.FC<BudgetIntelligenceProps> = ({
       try {
         const result = await scanReceipt(base64, file.type);
         setScanResult(result);
+        setEditCategory(result.category);
+        setEditMerchant(result.merchant);
         toast.success("Receipt Analyzed!");
       } catch (err) {
         toast.error("Failed to analyze receipt");
@@ -53,6 +59,8 @@ export const BudgetIntelligence: React.FC<BudgetIntelligenceProps> = ({
     try {
       const result = await parseTransactionText(rawText);
       setScanResult(result);
+      setEditCategory(result.category);
+      setEditMerchant(result.merchant);
       setRawText('');
       toast.success("Transaction Extracted!");
     } catch (err) {
@@ -68,8 +76,8 @@ export const BudgetIntelligence: React.FC<BudgetIntelligenceProps> = ({
       await addDoc(collection(db, 'expenses'), {
         userId,
         amount: scanResult.amount,
-        category: scanResult.category,
-        description: `${scanResult.merchant} (${scanResult.transactionType})`,
+        category: editCategory,
+        description: `${editMerchant} (${scanResult.transactionType})`,
         transactionDate: new Date(scanResult.date).toISOString() || new Date().toISOString(),
         date: new Date(scanResult.date).toISOString() || new Date().toISOString(), // Keep date for backward compatibility in views
         isPaid: true,
@@ -127,7 +135,7 @@ export const BudgetIntelligence: React.FC<BudgetIntelligenceProps> = ({
                   <p className="text-sm font-bold text-black dark:text-white">Upload Receipt</p>
                   <p className="text-[9px] text-black/40 dark:text-white/40 font-medium uppercase tracking-tighter">Auto-extracts Merchant, Amount & Date</p>
                 </div>
-                <input type="file" accept="image/*" className="hidden" onChange={handleReceiptScan} />
+                <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleReceiptScan} />
               </div>
             </label>
           ) : (
@@ -175,13 +183,29 @@ export const BudgetIntelligence: React.FC<BudgetIntelligenceProps> = ({
             </button>
 
             <div className="space-y-6">
-              <div className="space-y-1">
+              <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="bg-white/20 text-white text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-full">{scanResult.category.replace('_', ' ')}</span>
-                  <span className="bg-blue-500/20 text-blue-300 text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-full">{scanResult.transactionType}</span>
+                  <select 
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value)}
+                    className="bg-white/20 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-xl outline-none appearance-none cursor-pointer"
+                  >
+                    {PREDEFINED_CATEGORIES.map(cat => (
+                      <option key={cat} value={cat} className="text-black">{cat.replace('_', ' ')}</option>
+                    ))}
+                  </select>
+                  <span className="bg-blue-500/20 text-blue-300 text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-xl">{scanResult.transactionType}</span>
                 </div>
-                <h4 className="text-3xl font-bold italic serif tracking-tight">{scanResult.merchant}</h4>
-                <p className="text-xs font-bold text-white/40 uppercase tracking-widest">{format(new Date(scanResult.date), 'MMMM dd, yyyy')}</p>
+                <div>
+                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Details / Merchant</p>
+                  <input 
+                    type="text"
+                    value={editMerchant}
+                    onChange={(e) => setEditMerchant(e.target.value)}
+                    className="text-2xl font-bold italic serif tracking-tight bg-white/5 border border-white/10 focus:border-white/30 rounded-xl px-4 py-3 outline-none w-full transition-all"
+                  />
+                </div>
+                <p className="text-xs font-bold text-white/40 uppercase tracking-widest px-2">{format(new Date(scanResult.date), 'MMMM dd, yyyy')}</p>
               </div>
 
               <div className="bg-white/5 p-6 rounded-2xl border border-white/5 flex items-center justify-between">

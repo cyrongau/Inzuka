@@ -32,7 +32,7 @@ import {
   addDoc
 } from 'firebase/firestore';
 import { GoogleGenAI } from "@google/genai";
-import { cn, getHash } from '../../lib/utils';
+import { cn, getHash, getDeterministicFoodImage } from '../../lib/utils';
 import { format, startOfWeek, addDays, subDays, isSameDay } from 'date-fns';
 import RecipeBookModal from './RecipeBookModal';
 import { COMMUNITY_RECIPES } from '../../constants/recipes';
@@ -105,11 +105,11 @@ export default function MealPlanning({ user, profile }: { user: User, profile: a
       return FOOD_IMAGES[mealType][Math.abs(getHash(mealType)) % FOOD_IMAGES[mealType].length];
     }
     
-    const recipe = recipes.find(r => r.title.toLowerCase() === recipeTitle.toLowerCase());
+    const recipe = recipes.find(r => r?.title?.toLowerCase() === recipeTitle.toLowerCase());
     if (recipe?.image) return recipe.image;
     
     const seed = recipeTitle.toLowerCase().replace(/[^a-z0-9]/g, '-');
-    return `https://picsum.photos/seed/food-${seed}/1200/1200`;
+    return getDeterministicFoodImage(seed);
   };
 
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
@@ -117,7 +117,14 @@ export default function MealPlanning({ user, profile }: { user: User, profile: a
 
   const getPlanForDate = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    return plans.find(p => p.date === dateStr) || { date: dateStr, meals: { breakfast: '', lunch: '', dinner: '' }, servings: 2, suggestions: [] };
+    const existing = plans.find(p => p.date === dateStr);
+    return {
+      date: dateStr,
+      meals: existing?.meals || { breakfast: '', lunch: '', dinner: '' },
+      servings: existing?.servings || 2,
+      suggestions: existing?.suggestions || [],
+      ...existing
+    };
   };
 
   const activePlan = getPlanForDate(selectedDate);
@@ -139,7 +146,7 @@ export default function MealPlanning({ user, profile }: { user: User, profile: a
   };
 
   const allSuggestions = Array.from(new Set([
-     ...recipes.map(r => r.title),
+     ...recipes.map(r => r?.title).filter(Boolean),
      ...plans.flatMap(p => Object.values(p.meals || {}).filter(Boolean))
   ])).filter(Boolean);
 
@@ -162,9 +169,10 @@ export default function MealPlanning({ user, profile }: { user: User, profile: a
   };
 
   const handleAddSuggestion = () => {
-    if (!suggestionText.trim() || !user?.displayName) return;
+    const userName = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Member';
+    if (!suggestionText.trim()) return;
     const newSuggestions = [...(activePlan.suggestions || []), { 
-      user: user.displayName.split(' ')[0], 
+      user: userName, 
       text: suggestionText,
       image: suggestionImage 
     }];
@@ -284,8 +292,8 @@ export default function MealPlanning({ user, profile }: { user: User, profile: a
                 {/* Column 1: Aesthetic Dynamic Image */}
                 <div 
                   onClick={() => {
-                    const mealTitle = activePlan.meals[activeMealType];
-                    const recipe = recipes.find(r => r.title.toLowerCase() === mealTitle?.toLowerCase());
+                    const mealTitle = activePlan.meals?.[activeMealType];
+                    const recipe = recipes.find(r => r?.title?.toLowerCase() === mealTitle?.toLowerCase());
                     if (recipe) setViewingRecipe(recipe);
                   }}
                   className="relative group h-[500px] md:h-auto overflow-hidden cursor-pointer"
@@ -351,8 +359,8 @@ export default function MealPlanning({ user, profile }: { user: User, profile: a
                           <div className="flex items-start gap-8">
                               <div 
                                 onClick={() => {
-                                  const mealTitle = activePlan.meals[type.id];
-                                  const recipe = recipes.find(r => r.title.toLowerCase() === mealTitle?.toLowerCase());
+                                  const mealTitle = activePlan.meals?.[type.id];
+                                  const recipe = recipes.find(r => r?.title?.toLowerCase() === mealTitle?.toLowerCase());
                                   if (recipe) setViewingRecipe(recipe);
                                 }}
                                 className={cn(
@@ -361,7 +369,7 @@ export default function MealPlanning({ user, profile }: { user: User, profile: a
                               )}>
                                  {activePlan.meals?.[type.id] ? (
                                     <img 
-                                      src={getRecipeImage(activePlan.meals[type.id], type.id)} 
+                                      src={getRecipeImage(activePlan.meals?.[type.id], type.id)} 
                                       className="w-full h-full object-cover rounded-[1.8rem]" 
                                       alt="Meal" 
                                       referrerPolicy="no-referrer"
@@ -383,7 +391,7 @@ export default function MealPlanning({ user, profile }: { user: User, profile: a
                                  </div>
                                  <input 
                                   list="meal-suggestions"
-                                  value={activePlan.meals[type.id] || ''}
+                                  value={activePlan.meals?.[type.id] || ''}
                                   onChange={(e) => updateMeal(activePlan.date, type.id, e.target.value)}
                                   placeholder={`Whatcha eating?`}
                                   className={cn(
@@ -391,10 +399,11 @@ export default function MealPlanning({ user, profile }: { user: User, profile: a
                                     isActive ? "text-black dark:text-white opacity-100 translate-x-2" : "text-gray-200 dark:text-gray-600 opacity-60 hover:opacity-100"
                                   )}
                                 />
-                                <datalist id="meal-suggestions">
-                                   {allSuggestions.map((suggestion, idx) => (
-                                     <option key={idx} value={suggestion} />
-                                   ))}
+                              <datalist id="meal-suggestions">
+                                   {allSuggestions.map((suggestion, idx) => {
+                                     const val = typeof suggestion === 'string' ? suggestion : String(suggestion || '');
+                                     return <option key={idx} value={val} />;
+                                   })}
                                 </datalist>
                               </div>
                           </div>
@@ -427,7 +436,7 @@ export default function MealPlanning({ user, profile }: { user: User, profile: a
                         {activePlan.suggestions?.map((s: any, i: number) => (
                            <div key={i} className="flex gap-3 items-center bg-white dark:bg-zinc-800 p-4 rounded-2xl border border-black/5 dark:border-white/5 shadow-sm text-sm group">
                                <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs uppercase shrink-0">
-                                  {s.user.charAt(0)}
+                                  {s?.user?.charAt(0) || '?'}
                                </div>
                                <div>
                                   <span className="font-bold text-gray-400 dark:text-gray-500 block text-[10px] uppercase tracking-widest">{s.user} suggests</span>

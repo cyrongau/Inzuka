@@ -6,6 +6,8 @@ export interface ExtractedReceiptData {
   amount: number;
   date: string;
   merchant: string;
+  description: string;
+  reference: string;
   category: string;
   transactionType: "payment" | "deposit" | "withdrawal";
   confidence: number;
@@ -18,7 +20,7 @@ export async function scanReceipt(base64Image: string, mimeType: string): Promis
   3. Determine the transaction type ('payment', 'deposit', or 'withdrawal').`;
 
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
+    model: "gemini-1.5-flash",
     contents: {
       parts: [
         { inlineData: { data: base64Image.split(',')[1] || base64Image, mimeType } },
@@ -33,11 +35,13 @@ export async function scanReceipt(base64Image: string, mimeType: string): Promis
           amount: { type: Type.NUMBER },
           date: { type: Type.STRING },
           merchant: { type: Type.STRING },
+          description: { type: Type.STRING },
+          reference: { type: Type.STRING },
           category: { type: Type.STRING },
           transactionType: { type: Type.STRING },
           confidence: { type: Type.NUMBER }
         },
-        required: ["amount", "date", "merchant", "category", "transactionType"]
+        required: ["amount", "date", "merchant", "description", "category", "transactionType"]
       }
     }
   });
@@ -53,12 +57,12 @@ export async function parseTransactionText(text: string): Promise<ExtractedRecei
   1. Determine if this is a "deposit" (income/received funds), "payment" (expense/sent funds), or "withdrawal".
      - Keywords like "received", "deposited", "remittance", "inward" typically mean "deposit".
      - Keywords like "paid", "sent", "withdrawn", "buy goods" typically mean "payment" or "withdrawal".
-  2. Extract the amount, date, and the other party (merchant or person).
+  2. Extract the amount, date, the other party (merchant or person), and any reference number.
   3. Categorize into: 'rent', 'school_fees', 'utility', 'medical', 'insurance', 'emergency', 'misc', 'transport', 'business', 'food', 'shopping'.
   4. Accuracy is vital. If unsure, default to 'misc' category and 'payment' type.`;
 
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
+    model: "gemini-1.5-flash",
     contents: prompt,
     config: {
       responseMimeType: "application/json",
@@ -68,11 +72,13 @@ export async function parseTransactionText(text: string): Promise<ExtractedRecei
           amount: { type: Type.NUMBER },
           date: { type: Type.STRING },
           merchant: { type: Type.STRING },
+          description: { type: Type.STRING },
+          reference: { type: Type.STRING },
           category: { type: Type.STRING },
           transactionType: { type: Type.STRING },
           confidence: { type: Type.NUMBER }
         },
-        required: ["amount", "date", "merchant", "category", "transactionType"]
+        required: ["amount", "date", "merchant", "description", "category", "transactionType"]
       }
     }
   });

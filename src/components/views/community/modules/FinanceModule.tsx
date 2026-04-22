@@ -23,13 +23,16 @@ import {
   MessageSquareQuote,
   Loader2,
   FileSearch,
-  Upload
+  Upload,
+  Tags,
+  AlertCircle
 } from 'lucide-react';
 import { db } from '../../../../lib/firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, increment, setDoc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, increment, setDoc, getDoc, Timestamp } from 'firebase/firestore';
 import { cn } from '../../../../lib/utils';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
+import { format, addMonths, addWeeks, addDays } from 'date-fns';
 
 export default function CommunityFinanceModule({ community, user }: { community: any, user: User }) {
   const [activeSubTab, setActiveSubTab] = useState<'treasury' | 'loans' | 'table-banking'>('treasury');
@@ -59,44 +62,35 @@ export default function CommunityFinanceModule({ community, user }: { community:
   const [cyclePeriod, setCyclePeriod] = useState('');
 
   const generateCyclePeriods = () => {
-    if (!merryGoRound || !merryGoRound.frequency) return [];
-    
-    const now = new Date();
-    const monthName = now.toLocaleString('default', { month: 'long' });
-    const frequency = merryGoRound.frequency;
+    if (!merryGoRound || !merryGoRound.sequence) return [];
     
     const periods: string[] = [];
+    const baseDate = merryGoRound.createdAt?.toDate ? merryGoRound.createdAt.toDate() : new Date();
+    const frequency = merryGoRound.frequency || 'monthly';
     
-    if (frequency === 'weekly') {
-      const ordinals = ['One', 'Two', 'Three', 'Four', 'Five'];
-      for (let i = 0; i < 5; i++) {
-        periods.push(`Week ${ordinals[i]} ${monthName}`);
-      }
-    } else if (frequency === 'monthly') {
-      const currentMonth = now.toLocaleString('default', { month: 'long' });
-      const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1).toLocaleString('default', { month: 'long' });
-      periods.push(`${currentMonth} Cycle`, `${nextMonth} Cycle`);
-    } else if (frequency === 'bi-weekly') {
-       // Twice a week
-       for (let i = 1; i <= 8; i++) {
-         periods.push(`Bi-Week ${i} ${monthName}`);
-       }
-    } else if (frequency === 'fortnightly') {
-       periods.push(`First Fortnight ${monthName}`, `Second Fortnight ${monthName}`);
-    } else if (frequency === 'daily') {
-       // Today and tomorrow
-       periods.push(`Day ${now.getDate()} ${monthName} Contribution`);
-       const tomorrow = new Date(now);
-       tomorrow.setDate(now.getDate() + 1);
-       periods.push(`Day ${tomorrow.getDate()} ${tomorrow.toLocaleString('default', { month: 'long' })} Contribution`);
-    } else {
-       // 3-days or other
-       for (let i = 1; i <= 5; i++) {
-         periods.push(`Cycle ${i} ${monthName}`);
-       }
+    for (let i = 0; i < merryGoRound.sequence.length; i++) {
+       const mid = merryGoRound.sequence[i];
+       const name = userProfiles[mid]?.displayName || `Member ${mid.slice(-4)}`;
+       
+       let cycleDate = new Date(baseDate);
+       if (frequency === 'monthly') cycleDate = addMonths(baseDate, i);
+       else if (frequency === 'weekly') cycleDate = addWeeks(baseDate, i);
+       else if (frequency === 'fortnightly') cycleDate = addWeeks(baseDate, i * 2);
+       else if (frequency === 'daily') cycleDate = addDays(baseDate, i);
+       else if (frequency === '3-days') cycleDate = addDays(baseDate, i * 3);
+       else if (frequency === 'bi-weekly') cycleDate = addDays(baseDate, i * 3.5); // approx
+       
+       const dateStr = format(cycleDate, frequency === 'monthly' ? 'MMM yyyy' : 'MMM do, yyyy');
+       periods.push(`${dateStr} - ${name}`);
     }
     
     return periods;
+  };
+
+  const getContributionsForCurrentCycle = () => {
+    if (!merryGoRound) return [];
+    const currentPeriod = generateCyclePeriods()[merryGoRound.currentIndex];
+    return transactions.filter(t => t.cyclePeriod === currentPeriod && t.type === 'contribution');
   };
 
   // MGR Edit state
@@ -118,6 +112,18 @@ export default function CommunityFinanceModule({ community, user }: { community:
   const [editSmartAmount, setEditSmartAmount] = useState('');
   const [editSmartRef, setEditSmartRef] = useState('');
   const [editSmartDate, setEditSmartDate] = useState('');
+  const [editSmartCategory, setEditSmartCategory] = useState('');
+
+  const TRANSACTION_CATEGORIES = [
+    'Contribution', 
+    'Savings', 
+    'Loan Repayment', 
+    'Loan Disbursement', 
+    'MGR Cycle Payout', 
+    'Fines/Penalties',
+    'Emergency Fund',
+    'Welfare Fund'
+  ];
 
   // Loan specific state
   const [loanAmount, setLoanAmount] = useState('');
@@ -466,18 +472,20 @@ export default function CommunityFinanceModule({ community, user }: { community:
                            <p className="text-sm font-bold text-black dark:text-white">{t.userName || 'System Auto'}</p>
                            <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">
                               {t.type === 'savings' ? <span className="text-blue-500 font-bold uppercase mr-1">[SAVINGS]</span> : null}
+                              {t.type === 'loan_disbursement' ? <span className="text-orange-500 font-bold uppercase mr-1">[LOAN]</span> : null}
+                              {t.type === 'mgr_payout' ? <span className="text-purple-500 font-bold uppercase mr-1">[CYCLE PAYOUT]</span> : null}
                               {t.note}
                            </p>
                         </div>
                      </div>
-                     <div className="text-right">
-                        <p className={cn("text-sm font-black", t.type === 'contribution' || t.type === 'savings' ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
-                           {t.type === 'contribution' || t.type === 'savings' ? '+' : '-'} {t.amount?.toLocaleString()}
-                        </p>
-                        <p className="text-[10px] text-gray-400 dark:text-gray-500 font-mono">
-                           {t.createdAt?.toDate ? new Date(t.createdAt.toDate()).toLocaleDateString() : '...'}
-                        </p>
-                     </div>
+                        <div className="text-right">
+                           <p className={cn("text-sm font-black", t.type === 'contribution' || t.type === 'savings' ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
+                              {t.type === 'contribution' || t.type === 'savings' ? '+' : '-'} {t.amount?.toLocaleString()}
+                           </p>
+                           <p className="text-[10px] text-gray-400 dark:text-gray-500 font-mono">
+                              {t.createdAt?.toDate ? format(t.createdAt.toDate(), 'MMM dd, HH:mm') : '...'}
+                           </p>
+                        </div>
                   </div>
                 ))}
              </div>
@@ -643,15 +651,42 @@ export default function CommunityFinanceModule({ community, user }: { community:
                      <div className="space-y-3">
                         {merryGoRound.sequence?.map((mid: string, i: number) => (
                            <div key={`${mid}-${i}`} className={cn(
-                             "p-4 rounded-2xl flex items-center justify-between border transition-all",
+                             "p-4 rounded-2xl border transition-all",
                              merryGoRound.currentIndex === i ? "bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-900/50" : "bg-gray-50 dark:bg-zinc-800 border-transparent opacity-60"
                            )}>
-                              <div className="flex items-center gap-3">
-                                 <span className={cn("w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black", merryGoRound.currentIndex === i ? "bg-orange-500 text-white" : "bg-gray-200 dark:bg-zinc-700 text-gray-400 dark:text-gray-500")}>{i + 1}</span>
-                                 <p className="font-bold text-sm text-black dark:text-white">{userProfiles[mid]?.displayName || `Member ${mid.slice(-4)}`}</p>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                   <span className={cn("w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black", merryGoRound.currentIndex === i ? "bg-orange-500 text-white" : "bg-gray-200 dark:bg-zinc-700 text-gray-400 dark:text-gray-500")}>{i + 1}</span>
+                                   <p className="font-bold text-sm text-black dark:text-white">{userProfiles[mid]?.displayName || `Member ${mid.slice(-4)}`}</p>
+                                </div>
+                                {merryGoRound.currentIndex === i && <span className="text-[8px] font-black uppercase text-orange-600 dark:text-orange-400 tracking-widest">Collecting Next</span>}
+                                {merryGoRound.currentIndex > i && <CheckCircle2 className="w-4 h-4 text-green-500" />}
                               </div>
-                              {merryGoRound.currentIndex === i && <span className="text-[8px] font-black uppercase text-orange-600 dark:text-orange-400 tracking-widest">Collecting Next</span>}
-                              {merryGoRound.currentIndex > i && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                              
+                              {/* Cycle Progress Tracker */}
+                              {merryGoRound.currentIndex === i && (
+                                <div className="mt-4 pt-4 border-t border-orange-100 dark:border-orange-900/40">
+                                   <div className="flex justify-between items-center mb-2">
+                                      <span className="text-[8px] font-black uppercase text-orange-400 tracking-widest">Cycle Progress</span>
+                                      <span className="text-[8px] font-black text-orange-600 dark:text-orange-300">
+                                        KES {getContributionsForCurrentCycle().reduce((a, b) => a + b.amount, 0).toLocaleString()} / {merryGoRound.payoutAmount.toLocaleString()}
+                                      </span>
+                                   </div>
+                                   <div className="w-full h-1.5 bg-orange-100 dark:bg-orange-900/30 rounded-full overflow-hidden">
+                                      <motion.div 
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${Math.min(100, (getContributionsForCurrentCycle().reduce((a, b) => a + b.amount, 0) / merryGoRound.payoutAmount) * 100)}%` }}
+                                        className="h-full bg-orange-500"
+                                      />
+                                   </div>
+                                   {getContributionsForCurrentCycle().reduce((a, b) => a + b.amount, 0) < merryGoRound.payoutAmount && (
+                                      <div className="flex items-center gap-1 mt-2 text-orange-400">
+                                         <AlertCircle className="w-2.5 h-2.5" />
+                                         <span className="text-[8px] font-medium italic">Pending full collection...</span>
+                                      </div>
+                                   )}
+                                </div>
+                              )}
                            </div>
                         ))}
                      </div>
@@ -725,6 +760,7 @@ export default function CommunityFinanceModule({ community, user }: { community:
                               setEditSmartAmount(result.amount.toString());
                               setEditSmartRef(result.reference);
                               setEditSmartDate(result.date);
+                              setEditSmartCategory(result.category || 'Contribution');
                             }
                             setIsProcessingAI(false);
                           }}
@@ -760,6 +796,7 @@ export default function CommunityFinanceModule({ community, user }: { community:
                                    setEditSmartAmount(result.amount.toString());
                                    setEditSmartRef(result.reference);
                                    setEditSmartDate(result.date);
+                                   setEditSmartCategory(result.category || 'Contribution');
                                  }
                                  setIsProcessingAI(false);
                                };
@@ -809,6 +846,16 @@ export default function CommunityFinanceModule({ community, user }: { community:
                           />
                        </div>
                        <div className="space-y-2">
+                          <label className="text-[8px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 px-2">Category Confirmation</label>
+                          <select 
+                            value={editSmartCategory}
+                            onChange={e => setEditSmartCategory(e.target.value)}
+                            className="w-full p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl border border-black/5 dark:border-white/5 font-bold outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/50 text-black dark:text-white transition-all"
+                          >
+                            {TRANSACTION_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                       </div>
+                       <div className="space-y-2 md:col-span-2">
                           <label className="text-[8px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 px-2">Timestamp Detected</label>
                           <input 
                             type="text"
@@ -873,18 +920,20 @@ export default function CommunityFinanceModule({ community, user }: { community:
                                         userName: editSmartName,
                                         note: `Loan Repayment via ${editSmartRef}`,
                                         reference: editSmartRef,
+                                        category: editSmartCategory,
                                         createdAt: serverTimestamp(),
                                      });
                                      toast.success(`Loan Repayment: KES ${finalAmount.toLocaleString()} recorded.`);
                                   }
                               } else {
                                 await addDoc(collection(db, 'communities', community.id, 'transactions'), {
-                                  type: 'contribution',
+                                  type: editSmartCategory === 'Savings' ? 'savings' : 'contribution',
                                   amount: finalAmount,
                                   userId: 'external_ai_entry',
                                   userName: editSmartName,
                                   note: `Smart Entry via ${editSmartRef}`,
                                   reference: editSmartRef,
+                                  category: editSmartCategory,
                                   createdAt: serverTimestamp(),
                                   metadata: { 
                                     ...extractedData, 
@@ -892,6 +941,7 @@ export default function CommunityFinanceModule({ community, user }: { community:
                                     amount: finalAmount,
                                     reference: editSmartRef,
                                     date: editSmartDate,
+                                    category: editSmartCategory,
                                     smartType: smartInputType 
                                   }
                                 });
