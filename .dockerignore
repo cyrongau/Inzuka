@@ -1,0 +1,17 @@
+node_modules
+dist
+build
+coverage
+app
+.expo
+.expo-shared
+web-build
+.next
+.output
+.DS_Store
+.env*
+! .env.example
+package-lock.json
+*.log
+app.json
+metro.config.js
