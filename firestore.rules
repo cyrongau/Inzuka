@@ -95,7 +95,7 @@ service cloud.firestore {
              (!('phoneNumber' in data) || data.phoneNumber is string) &&
              (!('photoURL' in data) || data.photoURL is string) &&
              (!('bannerURL' in data) || data.bannerURL is string) &&
-             (!('familyRole' in data) || data.familyRole in ["Father", "Mother", "Guardian", "Son", "Daughter", "Relative", "Help"]) &&
+             (!('familyRole' in data) || data.familyRole in ["Father", "Mother", "Guardian", "Wife", "Husband", "Son", "Daughter", "Brother", "Sister", "Grandparent", "Relative", "Help"]) &&
              (!('familyId' in data) || data.familyId is string) &&
              (!('familyStatus' in data) || data.familyStatus in ["active", "suspended", "invited"]) &&
              (!('isVerified' in data) || data.isVerified is bool) &&

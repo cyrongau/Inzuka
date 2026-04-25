@@ -12,7 +12,7 @@
         "bannerURL": { "type": "string", "description": "URL for the profile banner image" },
         "phoneNumber": { "type": "string" },
         "mpesaPhoneNumber": { "type": "string", "description": "Default phone number for M-Pesa transactions" },
-        "familyRole": { "type": "string", "enum": ["Father", "Mother", "Guardian", "Son", "Daughter", "Relative", "Help"] },
+        "familyRole": { "type": "string", "enum": ["Father", "Mother", "Guardian", "Wife", "Husband", "Son", "Daughter", "Brother", "Sister", "Grandparent", "Relative", "Help"] },
         "familyId": { "type": "string", "description": "ID of the family group this user belongs to" },
         "familyStatus": { "type": "string", "enum": ["active", "suspended", "invited"], "description": "Membership status within the family" },
         "isVerified": { "type": "boolean", "description": "Whether identity document is verified" },

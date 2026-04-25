@@ -39,7 +39,7 @@ import { cn } from '../../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RefreshCcw } from 'lucide-react';
 
-const FAMILY_ROLES = ["Father", "Mother", "Guardian", "Son", "Daughter", "Relative", "Help"];
+const FAMILY_ROLES = ["Father", "Mother", "Guardian", "Wife", "Husband", "Son", "Daughter", "Brother", "Sister", "Grandparent", "Relative", "Help"];
 const RELATIONSHIP_TYPES = ["Spouse", "Parent", "Child", "Sibling", "Grandparent", "Cousin", "Friend", "Other"];
 
 interface JoinRequest {
@@ -841,7 +841,17 @@ export default function Profile({ user, profile: initialProfile }: { user: AuthU
                           <p className="text-sm font-bold text-orange-950 dark:text-orange-100 truncate max-w-full leading-tight">{member.displayName}</p>
                           <div className="flex items-center gap-2 mt-2">
                              <p className="text-[9px] font-black text-orange-500 uppercase tracking-widest bg-orange-50 dark:bg-orange-500/10 px-3 py-1 rounded-full">
-                               {member.familyRole || 'Resident'}
+                             {user.uid === family?.ownerId ? (
+                               <select 
+                                 value={member.familyRole || 'Resident'}
+                                 onChange={(e) => updateDoc(doc(db, 'users', member.uid), { familyRole: e.target.value })}
+                                 className="text-[9px] font-black text-orange-500 uppercase tracking-widest bg-orange-50 dark:bg-orange-500/10 px-3 py-1 rounded-full outline-none border-none cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-all appearance-none text-center"
+                               >
+                                 {FAMILY_ROLES.map(role => <option key={role} value={role}>{role}</option>)}
+                               </select>
+                             ) : (
+                               member.familyRole || 'Resident'
+                             )}
                              </p>
                              {member.age && (
                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 dark:bg-zinc-800 px-3 py-1 rounded-full">
