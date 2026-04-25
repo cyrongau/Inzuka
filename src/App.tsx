@@ -193,6 +193,17 @@ export default function App() {
     return <HubSelector onSelect={setActiveHub} hasFamily={!!profile.familyId} user={user} />;
   }
 
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    window.location.hash = `#${tab}`;
+    
+    // Ensure we are in the correct hub for family tabs
+    const familyTabs = ['dashboard', 'calendar', 'growth', 'shopping', 'chores', 'meals', 'chat', 'wallet', 'reports', 'budget', 'holidays', 'profile'];
+    if (profile?.familyId && familyTabs.includes(tab)) {
+      setActiveHub('family');
+    }
+  };
+
   const renderContent = () => {
     if (!profile) {
       return (
@@ -244,13 +255,13 @@ export default function App() {
             initialThreadId={selectedForumThreadId || undefined} 
           />
         );
-        case 'profile': return <Profile user={user} profile={profile} onTabChange={setActiveTab} />;
+        case 'profile': return <Profile user={user} profile={profile} onTabChange={handleTabChange} />;
         default: return <div className="p-8 text-center">Development in progress</div>;
       }
     }
-
+ 
     switch (activeTab) {
-      case 'dashboard': return <Dashboard user={user} profile={profile} onTabChange={setActiveTab} />;
+      case 'dashboard': return <Dashboard user={user} profile={profile} onTabChange={handleTabChange} />;
       case 'calendar': return <Calendar user={user} profile={profile} />;
       case 'growth': return <GrowthHub user={user} profile={profile} />;
       case 'shopping': return <Shopping user={user} profile={profile} />;
@@ -261,8 +272,8 @@ export default function App() {
       case 'reports': return <Reports user={user} profile={profile} />;
       case 'budget': return <Budget user={user} profile={profile} />;
       case 'holidays': return <Holidays user={user} profile={profile} />;
-      case 'profile': return <Profile user={user} profile={profile} onTabChange={setActiveTab} />;
-      default: return <Dashboard user={user} profile={profile} onTabChange={setActiveTab} />;
+      case 'profile': return <Profile user={user} profile={profile} onTabChange={handleTabChange} />;
+      default: return <Dashboard user={user} profile={profile} onTabChange={handleTabChange} />;
     }
   };
 
@@ -317,7 +328,7 @@ export default function App() {
               <button
                 key={item.id}
                 onClick={() => {
-                  setActiveTab(item.id);
+                  handleTabChange(item.id);
                   if (window.innerWidth < 1024) setIsSidebarOpen(false);
                 }}
                 className={cn(
@@ -337,7 +348,7 @@ export default function App() {
               <div className="pt-4 mt-4 border-t border-black/5">
                 <button
                   onClick={() => {
-                    setActiveTab('sysadmin');
+                    handleTabChange('sysadmin');
                     if (window.innerWidth < 1024) setIsSidebarOpen(false);
                   }}
                   className={cn(
@@ -435,7 +446,7 @@ export default function App() {
               </AnimatePresence>
             </div>
             <button 
-              onClick={() => setActiveTab('profile')}
+              onClick={() => handleTabChange('profile')}
               className={cn(
                 "w-10 h-10 bg-white dark:bg-zinc-800 rounded-full border border-black/5 dark:border-white/5 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors",
                 activeTab === 'profile' && "border-black dark:border-white bg-black dark:bg-white text-white dark:text-black"

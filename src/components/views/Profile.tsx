@@ -552,8 +552,48 @@ export default function Profile({ user, profile: initialProfile, onTabChange }: 
                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Scanned ID Document</p>
                    {profile?.idDocumentUrl ? (
                       <div className="aspect-video bg-gray-100 dark:bg-zinc-800 rounded-2xl overflow-hidden flex items-center justify-center group relative border border-black/5 dark:border-white/5">
-                         <img src={profile.idDocumentUrl} alt="ID" className="w-full h-full object-cover opacity-50" />
-                         <span className="absolute inset-0 flex items-center justify-center font-bold text-xs uppercase tracking-widest bg-black/20 text-white backdrop-blur-sm">View Document</span>
+                         <img src={profile.idDocumentUrl} alt="ID" className="w-full h-full object-cover" />
+                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-4">
+                            <button 
+                               onClick={() => window.open(profile.idDocumentUrl, '_blank')}
+                               className="bg-white text-black px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-transform"
+                            >
+                               View Document
+                            </button>
+                            <label className="bg-orange-500 text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-transform cursor-pointer flex items-center justify-center gap-2">
+                               {isScanning ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Camera className="w-4 h-4" />}
+                               <span>{isScanning ? 'Extracting...' : 'Rescan ID'}</span>
+                               <input 
+                                 type="file" 
+                                 accept="image/*" 
+                                 className="hidden" 
+                                 disabled={isScanning}
+                                 onChange={async (e) => {
+                                   if (e.target.files && e.target.files[0]) {
+                                     setIsScanning(true);
+                                     handleImageUpload(e.target.files[0], async (dataUrl) => {
+                                       try {
+                                         const extracted = await extractIdentityData(dataUrl, e.target.files![0].type);
+                                         await updateDoc(doc(db, 'users', user.uid), { 
+                                           idDocumentUrl: dataUrl,
+                                           isVerified: true,
+                                           age: extracted.age,
+                                           fullName: extracted.fullName,
+                                           idNumber: extracted.idNumber,
+                                           dob: extracted.dateOfBirth,
+                                           verifiedAt: new Date().toISOString()
+                                         });
+                                       } catch (err) {
+                                         console.error("Extraction failed", err);
+                                       } finally {
+                                         setIsScanning(false);
+                                       }
+                                     });
+                                   }
+                                 }}
+                               />
+                            </label>
+                         </div>
                       </div>
                    ) : (
                       <label className="w-full aspect-video border-2 border-dashed border-gray-200 dark:border-zinc-700 rounded-2xl flex flex-col items-center justify-center gap-3 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all text-gray-400 dark:text-gray-500 cursor-pointer">

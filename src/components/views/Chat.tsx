@@ -34,6 +34,7 @@ import { cn } from '../../lib/utils';
 import { format } from 'date-fns';
 import { getSmartReply } from '../../services/geminiService';
 import VideoCallModal from './VideoCallModal';
+import EmojiPicker from 'emoji-picker-react';
 
 interface Message {
   id: string;
@@ -57,7 +58,19 @@ export default function Chat({ user, profile }: { user: AuthUser, profile: any }
   const [showCallModal, setShowCallModal] = useState(false);
   const [callTarget, setCallTarget] = useState('');
   const [isGroupCall, setIsGroupCall] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+        setShowEmojiPicker(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (!profile?.familyId) return;
@@ -417,7 +430,25 @@ export default function Chat({ user, profile }: { user: AuthUser, profile: any }
                 onChange={e => setInputText(e.target.value)}
                 className="w-full bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 rounded-[2rem] p-5 text-sm font-medium outline-none text-black dark:text-white focus:bg-white dark:focus:bg-zinc-900 focus:ring-1 focus:ring-black/10 dark:focus:ring-white/10 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />
-              <button type="button" className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 dark:text-gray-500 hover:text-black dark:hover:text-white"><Smile className="w-5 h-5" /></button>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                <button 
+                  type="button" 
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  className="text-gray-300 dark:text-gray-500 hover:text-black dark:hover:text-white"
+                >
+                  <Smile className="w-5 h-5" />
+                </button>
+                {showEmojiPicker && (
+                  <div ref={emojiPickerRef} className="absolute bottom-full right-0 mb-4 z-50">
+                    <EmojiPicker 
+                      onEmojiClick={(emojiData) => {
+                        setInputText(prev => prev + emojiData.emoji);
+                        setShowEmojiPicker(false);
+                      }} 
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
             <button 

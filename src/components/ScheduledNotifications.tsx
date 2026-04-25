@@ -150,10 +150,23 @@ export default function ScheduledNotifications({ user, profile }: { user: any, p
 
   const triggerAlert = (id: string, group: string, data: any) => {
     const uniqueId = `${id}_${group}_${format(new Date(), 'yyyyMMdd')}`;
-    if (notifiedIds.has(uniqueId)) return;
+    
+    // Check both state and localStorage to be doubly sure
+    const stored = localStorage.getItem(`notified_ids_${user.uid}`);
+    const currentNotified = stored ? new Set(JSON.parse(stored)) : notifiedIds;
+
+    if (currentNotified.has(uniqueId)) return;
 
     if (data.type === 'buzz') {
       setActiveAlert(data);
+      // Play alert sound for buzz
+      try {
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        audio.volume = 0.5;
+        audio.play().catch(e => console.warn("Audio playback failed", e));
+      } catch (e) {
+        console.warn("Could not play alert sound", e);
+      }
     } else {
       showToast('info', { title: data.title, message: data.message });
     }
