@@ -22,9 +22,9 @@ import { db, handleFirestoreError, OperationType } from '../../lib/firebase';
 import { collection, query, where, onSnapshot, limit, orderBy, doc, getDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { format, parseISO, isAfter } from 'date-fns';
 import { cn } from '../../lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 
-export default function Dashboard({ user, profile }: { user: User, profile: any }) {
+export default function Dashboard({ user, profile, onTabChange }: { user: User, profile: any, onTabChange: (tab: string) => void }) {
   const [myChores, setMyChores] = useState<any[]>([]);
   const [myHabits, setMyHabits] = useState<any[]>([]);
   const [shoppingCount, setShoppingCount] = useState(0);
@@ -36,6 +36,7 @@ export default function Dashboard({ user, profile }: { user: User, profile: any 
   const [latestNotice, setLatestNotice] = useState<any>(null);
   const [showNoticeModal, setShowNoticeModal] = useState(false);
   const [noticeText, setNoticeText] = useState('');
+  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
 
   const familyId = profile?.familyId;
 
@@ -369,13 +370,22 @@ export default function Dashboard({ user, profile }: { user: User, profile: any 
             <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-black/5 dark:border-white/5 shadow-sm">
                <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-bold italic serif">Coming Up</h3>
-                  <CalendarIcon className="w-5 h-5 text-gray-300 dark:text-gray-600" />
+                  <button 
+                    onClick={() => onTabChange('calendar')}
+                    className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all"
+                  >
+                    <CalendarIcon className="w-5 h-5 text-gray-300 dark:text-gray-600" />
+                  </button>
                </div>
                <div className="space-y-4">
                   {upcomingEvents.length === 0 ? (
                     <div className="text-center py-6 opacity-20 text-xs italic">No major plans this month</div>
                   ) : upcomingEvents.map(event => (
-                    <div key={event.id} className="flex items-center gap-4 group cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-2 rounded-2xl transition-all">
+                    <div 
+                      key={event.id} 
+                      onClick={() => setSelectedEvent(event)}
+                      className="flex items-center gap-4 group cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-2 rounded-2xl transition-all"
+                    >
                        <div className="w-12 h-12 bg-gray-50 dark:bg-zinc-800 rounded-2xl border border-black/5 dark:border-white/5 flex flex-col items-center justify-center shrink-0 group-hover:bg-black dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-black transition-colors">
                           <span className="text-[8px] font-black uppercase tracking-widest opacity-40">{format(parseISO(event.date), 'MMM')}</span>
                           <span className="text-lg font-black italic serif">{format(parseISO(event.date), 'd')}</span>
@@ -388,7 +398,10 @@ export default function Dashboard({ user, profile }: { user: User, profile: any 
                     </div>
                   ))}
                </div>
-               <button className="w-full mt-6 py-3 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-black dark:hover:text-white transition-colors flex items-center justify-center gap-2">
+               <button 
+                onClick={() => onTabChange('calendar')}
+                className="w-full mt-6 py-3 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-black dark:hover:text-white transition-colors flex items-center justify-center gap-2"
+               >
                  View Full Calendar <ChevronRight className="w-3 h-3" />
                </button>
             </div>
@@ -410,7 +423,7 @@ export default function Dashboard({ user, profile }: { user: User, profile: any 
                 className="bg-white dark:bg-zinc-900 w-full max-w-lg rounded-[3rem] p-8 shadow-2xl relative border border-black/5 dark:border-white/5"
               >
                 <div className="flex items-center justify-between mb-6">
-                   <h3 className="text-xl font-bold italic serif">Post Update</h3>
+                   <h3 className="text-xl font-bold italic serif text-black dark:text-white">Post Update</h3>
                    <button 
                      onClick={() => setShowNoticeModal(false)}
                      className="p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-black dark:hover:text-white rounded-full transition-all"
@@ -423,7 +436,7 @@ export default function Dashboard({ user, profile }: { user: User, profile: any 
                     placeholder="Share something with the family..."
                     value={noticeText}
                     onChange={e => setNoticeText(e.target.value)}
-                    className="w-full bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 p-5 rounded-2xl font-medium min-h-[120px] focus:ring-1 focus:ring-black/10 dark:focus:ring-white/10 outline-none leading-relaxed"
+                    className="w-full bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 p-5 rounded-2xl font-medium min-h-[120px] focus:ring-1 focus:ring-black/10 dark:focus:ring-white/10 outline-none leading-relaxed text-black dark:text-white"
                   />
                   <button 
                     onClick={handlePostNotice}
@@ -434,6 +447,77 @@ export default function Dashboard({ user, profile }: { user: User, profile: any 
                   </button>
                 </div>
               </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {selectedEvent && (
+            <motion.div 
+               initial={{ opacity: 0 }}
+               animate={{ opacity: 1 }}
+               exit={{ opacity: 0 }}
+               className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-md bg-black/40 dark:bg-black/80"
+            >
+               <motion.div 
+                  initial={{ scale: 0.95, y: 20 }}
+                  animate={{ scale: 1, y: 0 }}
+                  exit={{ scale: 0.95, y: 20 }}
+                  className="bg-white dark:bg-zinc-900 w-full max-w-xl rounded-[3rem] shadow-2xl relative overflow-hidden border border-black/5 dark:border-white/5"
+               >
+                  <button 
+                    onClick={() => setSelectedEvent(null)}
+                    className="absolute top-6 right-6 p-2 bg-black/20 text-white rounded-xl hover:bg-black/40 transition-all z-20"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+
+                  <div className="h-40 bg-indigo-600 relative overflow-hidden">
+                     <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-800" />
+                     <div className="absolute bottom-6 left-8">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-1">{selectedEvent.type}</p>
+                        <h3 className="text-3xl font-black italic serif text-white tracking-tight">{selectedEvent.title}</h3>
+                     </div>
+                  </div>
+
+                  <div className="p-8 space-y-6">
+                     <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-1">
+                           <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Date</p>
+                           <p className="text-sm font-bold text-black dark:text-white">{format(parseISO(selectedEvent.date), 'MMMM dd, yyyy')}</p>
+                        </div>
+                        <div className="space-y-1">
+                           <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Location</p>
+                           <p className="text-sm font-bold text-black dark:text-white">{selectedEvent.venue || 'TBD'}</p>
+                        </div>
+                     </div>
+
+                     {selectedEvent.description && (
+                        <div className="space-y-2">
+                           <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Details</p>
+                           <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed font-medium">{selectedEvent.description}</p>
+                        </div>
+                     )}
+
+                     <div className="pt-4 flex gap-3">
+                        <button 
+                           onClick={() => {
+                              setSelectedEvent(null);
+                              onTabChange('calendar');
+                           }}
+                           className="flex-1 bg-black dark:bg-white text-white dark:text-black py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:scale-[1.02] active:scale-95 transition-transform"
+                        >
+                           Edit in Calendar
+                        </button>
+                        <button 
+                           onClick={() => setSelectedEvent(null)}
+                           className="px-8 py-4 bg-gray-50 dark:bg-zinc-800 text-gray-400 dark:text-gray-500 rounded-xl font-black uppercase text-[10px] tracking-widest hover:text-black dark:hover:text-white transition-colors"
+                        >
+                           Close
+                        </button>
+                     </div>
+                  </div>
+               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>

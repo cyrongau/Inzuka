@@ -4,7 +4,7 @@ import {
   CheckCircle2, 
   ShoppingCart, 
   Layers, 
-  Calendar, 
+  Calendar as CalendarIcon, 
   UtensilsCrossed, 
   Wallet, 
   Plane,
@@ -22,7 +22,7 @@ import {
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
 import { doc, getDoc, setDoc, onSnapshot, collection, query, where, orderBy, limit } from 'firebase/firestore';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
 
 import { format, startOfWeek, addDays, subDays, isSameDay } from 'date-fns';
@@ -40,6 +40,7 @@ import SystemAdminDashboard from './components/views/admin/SystemAdmin';
 import NotificationDropdown from './components/NotificationDropdown';
 import SupportCenter from './components/views/SupportCenter';
 import Dashboard from './components/views/Dashboard';
+import Calendar from './components/views/Calendar';
 import GrowthHub from './components/views/GrowthHub';
 import Shopping from './components/views/Shopping';
 import Chores from './components/views/Chores';
@@ -104,6 +105,7 @@ export default function App() {
 
   const familyMenuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
+    { id: 'calendar', label: 'Family Calendar', icon: CalendarIcon },
     { id: 'growth', label: 'Growth Hub', icon: CheckCircle2 },
     { id: 'shopping', label: 'Shopping & Lists', icon: ShoppingCart },
     { id: 'chores', label: 'Chores & Cleaning', icon: Layers },
@@ -227,7 +229,8 @@ export default function App() {
     }
 
     switch (activeTab) {
-      case 'dashboard': return <Dashboard user={user} profile={profile} />;
+      case 'dashboard': return <Dashboard user={user} profile={profile} onTabChange={setActiveTab} />;
+      case 'calendar': return <Calendar user={user} profile={profile} />;
       case 'growth': return <GrowthHub user={user} profile={profile} />;
       case 'shopping': return <Shopping user={user} profile={profile} />;
       case 'chores': return <Chores user={user} profile={profile} />;
@@ -238,7 +241,7 @@ export default function App() {
       case 'budget': return <Budget user={user} profile={profile} />;
       case 'holidays': return <Holidays user={user} profile={profile} />;
       case 'profile': return <Profile user={user} profile={profile} />;
-      default: return <Dashboard user={user} profile={profile} />;
+      default: return <Dashboard user={user} profile={profile} onTabChange={setActiveTab} />;
     }
   };
 
