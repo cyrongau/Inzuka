@@ -10,6 +10,7 @@ import {
   Plane,
   Settings,
   Bell,
+  MessageCircle,
   User as UserIcon,
   ChevronLeft,
   ChevronRight,
@@ -63,7 +64,10 @@ export default function App() {
   const { user, profile, loading, signIn, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const [activeHub, setActiveHub] = useState<'selection' | 'family' | 'community'>('selection');
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(() => {
+    const hash = window.location.hash.replace('#', '');
+    return hash || 'dashboard';
+  });
   const [selectedCommunityId, setSelectedCommunityId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -85,6 +89,23 @@ export default function App() {
     });
     return () => unsub();
   }, [user]);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash) {
+        setActiveTab(hash);
+        if (profile?.familyId && ['dashboard', 'calendar', 'growth', 'shopping', 'chores', 'meals', 'chat', 'wallet', 'reports', 'budget', 'holidays', 'profile'].includes(hash)) {
+          setActiveHub('family');
+        }
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    if (window.location.hash && profile) handleHashChange();
+    
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [profile]);
 
   useEffect(() => {
     const checkVerification = () => {
@@ -110,7 +131,7 @@ export default function App() {
     { id: 'shopping', label: 'Shopping & Lists', icon: ShoppingCart },
     { id: 'chores', label: 'Chores & Cleaning', icon: Layers },
     { id: 'meals', label: 'Meal Planning', icon: UtensilsCrossed },
-    { id: 'chat', label: 'Family Lounge', icon: Bell },
+    { id: 'chat', label: 'Family Lounge', icon: MessageCircle },
     { id: 'wallet', label: 'Digital Wallet', icon: Wallet },
     { id: 'reports', label: 'Financial Reports', icon: FileText },
     { id: 'budget', label: 'Budget & Goals', icon: Layers },
@@ -223,7 +244,7 @@ export default function App() {
             initialThreadId={selectedForumThreadId || undefined} 
           />
         );
-        case 'profile': return <Profile user={user} profile={profile} />;
+        case 'profile': return <Profile user={user} profile={profile} onTabChange={setActiveTab} />;
         default: return <div className="p-8 text-center">Development in progress</div>;
       }
     }
@@ -240,7 +261,7 @@ export default function App() {
       case 'reports': return <Reports user={user} profile={profile} />;
       case 'budget': return <Budget user={user} profile={profile} />;
       case 'holidays': return <Holidays user={user} profile={profile} />;
-      case 'profile': return <Profile user={user} profile={profile} />;
+      case 'profile': return <Profile user={user} profile={profile} onTabChange={setActiveTab} />;
       default: return <Dashboard user={user} profile={profile} onTabChange={setActiveTab} />;
     }
   };

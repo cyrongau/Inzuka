@@ -17,7 +17,7 @@ import {
   Sparkles,
   X
 } from 'lucide-react';
-import { db } from '../../lib/firebase';
+import { db, handleFirestoreError, OperationType } from '../../lib/firebase';
 import { 
   collection, 
   addDoc, 
@@ -72,6 +72,8 @@ export default function Chat({ user, profile }: { user: AuthUser, profile: any }
     const unsub = onSnapshot(q, (snap) => {
       const msgs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
       setMessages(msgs.reverse());
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'messages');
     });
 
     const uq = query(
@@ -84,11 +86,15 @@ export default function Chat({ user, profile }: { user: AuthUser, profile: any }
         users[doc.id] = doc.data();
       });
       setFamilyMembers(users);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'users');
     });
 
     const fref = doc(db, 'families', profile.familyId);
     const unsubFam = onSnapshot(fref, (snap) => {
       if (snap.exists()) setFamilyData(snap.data());
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, `families/${profile.familyId}`);
     });
 
     return () => { unsub(); unsubUsers(); unsubFam(); };

@@ -232,3 +232,52 @@ export async function generateWeeklyMealPlan(startDate: string): Promise<any[]> 
 
   return JSON.parse(response.text.trim());
 }
+
+export interface ExtractedIdentityData {
+  fullName: string;
+  idNumber: string;
+  dateOfBirth: string; // DD-MM-YYYY
+  age: number;
+  gender: string;
+  nationality: string;
+  confidence: number;
+}
+
+export async function extractIdentityData(base64Image: string, mimeType: string): Promise<ExtractedIdentityData> {
+  const prompt = `You are an expert identity document verification assistant. 
+  Analyze this identity document (ID Card, Passport, etc.).
+  1. Extract the full name, ID/Passport number, and DATE OF BIRTH.
+  2. For Date of Birth, carefully look for "Date of Birth" or "DOB". In Kenyan IDs/Passports, this is formatted as DD-MM-YYYY.
+  3. Calculate the age based on today's date (April 25, 2026).
+  4. Accuracy is mission-critical. If any field is unclear, mark it as "Unknown".
+  
+  Format the Date of Birth as DD-MM-YYYY.`;
+
+  const response = await ai.models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: {
+      parts: [
+        { inlineData: { data: base64Image.split(',')[1] || base64Image, mimeType } },
+        { text: prompt }
+      ]
+    },
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          fullName: { type: Type.STRING },
+          idNumber: { type: Type.STRING },
+          dateOfBirth: { type: Type.STRING },
+          age: { type: Type.NUMBER },
+          gender: { type: Type.STRING },
+          nationality: { type: Type.STRING },
+          confidence: { type: Type.NUMBER }
+        },
+        required: ["fullName", "idNumber", "dateOfBirth", "age"]
+      }
+    }
+  });
+  
+  return JSON.parse(response.text.trim());
+}

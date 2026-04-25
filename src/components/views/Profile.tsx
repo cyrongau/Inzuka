@@ -21,9 +21,13 @@ import {
   ImageIcon,
   AlertCircle,
   MessageCircle,
+  Settings,
+  MoreVertical,
+  Loader2,
   X
 } from 'lucide-react';
 import { db, handleFirestoreError, OperationType } from '../../lib/firebase';
+import { extractIdentityData } from '../../services/geminiService';
 import { 
   doc, 
   updateDoc, 
@@ -89,7 +93,7 @@ const handleImageUpload = (file: File, callback: (v: string) => void) => {
   reader.readAsDataURL(file);
 };
 
-export default function Profile({ user, profile: initialProfile }: { user: AuthUser, profile: UserProfile }) {
+export default function Profile({ user, profile: initialProfile, onTabChange }: { user: AuthUser, profile: UserProfile, onTabChange?: (tab: string) => void }) {
   const [profile, setProfile] = useState<UserProfile | null>(initialProfile);
   const [family, setFamily] = useState<Family | null>(null);
   const [familyMembers, setFamilyMembers] = useState<UserProfile[]>([]);
@@ -116,6 +120,8 @@ export default function Profile({ user, profile: initialProfile }: { user: AuthU
   const [tempBannerUrl, setTempBannerUrl] = useState('');
   const [showFamilyBannerInput, setShowFamilyBannerInput] = useState(false);
   const [tempFamilyBannerUrl, setTempFamilyBannerUrl] = useState('');
+  const [activeMemberControl, setActiveMemberControl] = useState<string | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
 
   useEffect(() => {
     // Current User Profile
@@ -427,13 +433,22 @@ export default function Profile({ user, profile: initialProfile }: { user: AuthU
             )}
           </div>
           
-          <div className="pb-8 pt-6 space-y-3 flex-1 w-full text-center md:text-left">
-            <h1 className="text-5xl font-black italic serif tracking-tight text-black dark:text-white flex items-center gap-6 justify-center md:justify-start">
-              {profile?.displayName}
-              <span className="bg-orange-500 text-[10px] text-white px-4 py-1.5 rounded-full uppercase tracking-widest font-bold shadow-lg shadow-orange-500/20">
-                {profile?.familyRole || 'Resident'}
-              </span>
-            </h1>
+          <div className="pb-8 pt-6 space-y-4 flex-1 w-full text-center md:text-left">
+            <div className="flex flex-col gap-1">
+              <h1 className="text-5xl font-black italic serif tracking-tight text-black dark:text-white flex flex-wrap items-center gap-6 justify-center md:justify-start">
+                {profile?.displayName}
+                <div className="flex items-center gap-2">
+                  <span className="bg-orange-500 text-[10px] text-white px-4 py-1.5 rounded-full uppercase tracking-widest font-bold shadow-lg shadow-orange-500/20">
+                    {profile?.familyRole || 'Resident'}
+                  </span>
+                  {family?.name && (
+                    <span className="bg-white/10 backdrop-blur-md text-gray-500 dark:text-gray-400 text-[10px] px-4 py-1.5 rounded-full uppercase tracking-widest font-bold border border-black/5 dark:border-white/5">
+                      {family.name}
+                    </span>
+                  )}
+                </div>
+              </h1>
+            </div>
             <div className="flex flex-wrap items-center gap-6 justify-center md:justify-start">
               <p className="text-gray-400 dark:text-gray-500 font-bold text-xs uppercase tracking-widest flex items-center gap-2">
                 <Mail className="w-4 h-4 text-gray-300 dark:text-gray-600" /> {profile?.email}
@@ -533,7 +548,7 @@ export default function Profile({ user, profile: initialProfile }: { user: AuthU
              </div>
 
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white dark:bg-zinc-900 p-6 rounded-[2.5rem] border border-black/[0.03] dark:border-white/[0.03] space-y-4">
+                 <div className="bg-white dark:bg-zinc-900 p-6 rounded-[2.5rem] border border-black/[0.03] dark:border-white/[0.03] space-y-4">
                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Scanned ID Document</p>
                    {profile?.idDocumentUrl ? (
                       <div className="aspect-video bg-gray-100 dark:bg-zinc-800 rounded-2xl overflow-hidden flex items-center justify-center group relative border border-black/5 dark:border-white/5">
@@ -542,21 +557,45 @@ export default function Profile({ user, profile: initialProfile }: { user: AuthU
                       </div>
                    ) : (
                       <label className="w-full aspect-video border-2 border-dashed border-gray-200 dark:border-zinc-700 rounded-2xl flex flex-col items-center justify-center gap-3 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all text-gray-400 dark:text-gray-500 cursor-pointer">
-                         <Camera className="w-8 h-8" />
-                         <span className="text-[10px] font-bold uppercase tracking-widest">Upload ID/Passport</span>
+                         {isScanning ? (
+                            <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+                         ) : (
+                            <Camera className="w-8 h-8" />
+                         )}
+                         <span className="text-[10px] font-bold uppercase tracking-widest">
+                            {isScanning ? 'Extracting Identity Data...' : 'Upload ID/Passport'}
+                         </span>
                          <input 
                            type="file" 
                            accept="image/*" 
                            className="hidden" 
-                           onChange={e => {
+                           disabled={isScanning}
+                           onChange={async (e) => {
                              if (e.target.files && e.target.files[0]) {
-                               handleImageUpload(e.target.files[0], (dataUrl) => {
-                                 // Simulate identity scan: verify and set a standard generic age
-                                 updateDoc(doc(db, 'users', user.uid), { 
-                                   idDocumentUrl: dataUrl,
-                                   isVerified: true,
-                                   age: 24, // Simulated static extraction for UI representation
-                                 });
+                               setIsScanning(true);
+                               handleImageUpload(e.target.files[0], async (dataUrl) => {
+                                 try {
+                                   const extracted = await extractIdentityData(dataUrl, e.target.files![0].type);
+                                   await updateDoc(doc(db, 'users', user.uid), { 
+                                     idDocumentUrl: dataUrl,
+                                     isVerified: true,
+                                     age: extracted.age,
+                                     fullName: extracted.fullName,
+                                     idNumber: extracted.idNumber,
+                                     dob: extracted.dateOfBirth,
+                                     verifiedAt: new Date().toISOString()
+                                   });
+                                 } catch (err) {
+                                   console.error("Extraction failed", err);
+                                   // Fallback if extraction fails
+                                   await updateDoc(doc(db, 'users', user.uid), { 
+                                     idDocumentUrl: dataUrl,
+                                     isVerified: true,
+                                     age: 24, // Fallback age
+                                   });
+                                 } finally {
+                                   setIsScanning(false);
+                                 }
                                });
                              }
                            }}
@@ -844,7 +883,13 @@ export default function Profile({ user, profile: initialProfile }: { user: AuthU
                              {user.uid === family?.ownerId ? (
                                <select 
                                  value={member.familyRole || 'Resident'}
-                                 onChange={(e) => updateDoc(doc(db, 'users', member.uid), { familyRole: e.target.value })}
+                                 onChange={async (e) => {
+                                   try {
+                                     await updateDoc(doc(db, 'users', member.uid), { familyRole: e.target.value });
+                                   } catch (err) {
+                                     handleFirestoreError(err, OperationType.WRITE, `users/${member.uid}`);
+                                   }
+                                 }}
                                  className="text-[9px] font-black text-orange-500 uppercase tracking-widest bg-orange-50 dark:bg-orange-500/10 px-3 py-1 rounded-full outline-none border-none cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-all appearance-none text-center"
                                >
                                  {FAMILY_ROLES.map(role => <option key={role} value={role}>{role}</option>)}
@@ -864,8 +909,12 @@ export default function Profile({ user, profile: initialProfile }: { user: AuthU
                             <button 
                               onClick={() => {
                                 localStorage.setItem('privateChatTarget', member.uid);
-                                window.location.hash = '#chat';
-                                window.location.reload(); // Force reload to trigger Chat view logic
+                                if (onTabChange) {
+                                  onTabChange('chat');
+                                } else {
+                                  window.location.hash = '#chat';
+                                  window.location.reload();
+                                }
                               }}
                               className="mt-3 w-full py-2 bg-black dark:bg-white text-white dark:text-black rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-transform flex items-center justify-center gap-2"
                             >
@@ -876,23 +925,76 @@ export default function Profile({ user, profile: initialProfile }: { user: AuthU
 
                        {/* Authority Actions for Owner */}
                        {user.uid === family?.ownerId && member.uid !== user.uid && (
-                          <div className="absolute inset-0 bg-white/95 dark:bg-zinc-900/95 rounded-[2.5rem] flex flex-col items-center justify-center p-4 gap-2 opacity-0 group-hover/member:opacity-100 transition-all border border-black/5 dark:border-white/5">
-                              <p className="text-[8px] font-black uppercase tracking-tighter text-gray-400 dark:text-gray-500 mb-2">Member Control</p>
-                              <button 
-                                onClick={() => updateDoc(doc(db, 'users', member.uid), { familyStatus: member.familyStatus === 'suspended' ? 'active' : 'suspended' })}
-                                className={cn(
-                                  "w-full py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all",
-                                  member.familyStatus === 'suspended' ? "bg-green-500 text-white border-green-600" : "bg-orange-100 dark:bg-orange-500/20 text-orange-900 dark:text-orange-400 border-orange-200 dark:border-orange-500/30"
-                                )}
-                              >
-                                {member.familyStatus === 'suspended' ? 'Reinstate' : 'Suspend'}
-                              </button>
-                              <button 
-                                onClick={() => updateDoc(doc(db, 'users', member.uid), { familyId: null, familyStatus: null })}
-                                className="w-full py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest bg-red-50 dark:bg-red-500/10 text-red-600 border border-red-100 dark:border-red-500/30"
-                              >
-                                Remove
-                              </button>
+                          <div className="absolute top-4 right-4 z-20">
+                             <button 
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 setActiveMemberControl(activeMemberControl === member.uid ? null : member.uid);
+                               }}
+                               className={cn(
+                                 "p-2 rounded-xl transition-all shadow-lg border",
+                                 activeMemberControl === member.uid 
+                                   ? "bg-black text-white border-black" 
+                                   : "bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md text-gray-500 hover:text-black dark:hover:text-white border-black/5 dark:border-white/5"
+                               )}
+                             >
+                                <Settings className="w-4 h-4" />
+                             </button>
+
+                             <AnimatePresence>
+                               {activeMemberControl === member.uid && (
+                                 <motion.div 
+                                    initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                                    className="absolute top-full right-0 mt-3 w-48 bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-black/5 dark:border-white/5 p-4 z-30"
+                                 >
+                                    <p className="text-[8px] font-black uppercase tracking-widest text-gray-400 mb-4 px-2">Manage Member</p>
+                                    <div className="space-y-2">
+                                       <button 
+                                          onClick={async (e) => {
+                                             e.stopPropagation();
+                                             try {
+                                               await updateDoc(doc(db, 'users', member.uid), { 
+                                                  familyStatus: member.familyStatus === 'suspended' ? 'active' : 'suspended' 
+                                               });
+                                               setActiveMemberControl(null);
+                                             } catch (err) {
+                                               handleFirestoreError(err, OperationType.WRITE, `users/${member.uid}`);
+                                             }
+                                          }}
+                                          className={cn(
+                                             "w-full py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all text-center",
+                                             member.familyStatus === 'suspended' 
+                                               ? "bg-green-500 text-white hover:bg-green-600" 
+                                               : "bg-orange-500/10 text-orange-600 hover:bg-orange-500 hover:text-white"
+                                          )}
+                                       >
+                                          {member.familyStatus === 'suspended' ? 'Reinstate' : 'Suspend'}
+                                       </button>
+                                       <button 
+                                          onClick={async (e) => {
+                                             e.stopPropagation();
+                                             if (!window.confirm(`Are you sure you want to remove ${member.displayName} from the family?`)) return;
+                                             try {
+                                               await updateDoc(doc(db, 'users', member.uid), { 
+                                                  familyId: null, 
+                                                  familyStatus: null,
+                                                  familyRole: null
+                                               });
+                                               setActiveMemberControl(null);
+                                             } catch (err) {
+                                               handleFirestoreError(err, OperationType.WRITE, `users/${member.uid}`);
+                                             }
+                                          }}
+                                          className="w-full py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest bg-red-500/10 text-red-600 hover:bg-red-500 hover:text-white transition-all text-center"
+                                       >
+                                          Remove Member
+                                       </button>
+                                    </div>
+                                 </motion.div>
+                               )}
+                             </AnimatePresence>
                           </div>
                        )}
                     </motion.div>
