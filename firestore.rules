@@ -89,9 +89,8 @@ service cloud.firestore {
     }
 
     function isValidUser(data) {
-      return data.keys().hasAll(['uid', 'email']) &&
-             data.uid is string &&
-             data.email is string &&
+      return (!('uid' in data) || data.uid is string) &&
+             (!('email' in data) || data.email is string) &&
              (!('mpesaPhoneNumber' in data) || data.mpesaPhoneNumber is string) &&
              (!('phoneNumber' in data) || data.phoneNumber is string) &&
              (!('photoURL' in data) || data.photoURL is string) &&
@@ -279,8 +278,12 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isAuthenticated();
-      allow create: if isOwner(userId) && isValidUser(request.resource.data);
-      allow update: if (isOwner(userId) || (resource.data.familyId != null && isFamilyOwner(resource.data.familyId))) && isValidUser(request.resource.data);
+      allow create: if isOwner(userId) && isValidUser(incoming()) && incoming().keys().hasAll(['uid', 'email']);
+      allow update: if (
+        isOwner(userId) || 
+        (incoming().familyId != null && isFamilyOwner(incoming().familyId)) ||
+        (existing().familyId != null && isFamilyOwner(existing().familyId))
+      ) && isValidUser(incoming());
     }
 
     match /families/{familyId} {
@@ -409,6 +412,24 @@ service cloud.firestore {
       allow read, write: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid) && (request.resource == null || request.resource.data.userId == request.auth.uid) && (request.resource == null || isValidReceipt(request.resource.data));
     }
 
+    match /joinRequests/{requestId} {
+      allow read: if isAuthenticated() && (
+        (resource != null && resource.data.userId == request.auth.uid) || 
+        (resource != null && isFamilyOwner(resource.data.familyId)) ||
+        (resource == null) // for queries
+      );
+      allow list: if isAuthenticated();
+      allow create: if isAuthenticated() && 
+                    request.resource.data.userId == request.auth.uid && 
+                    request.resource.data.status == 'pending' &&
+                    exists(/databases/$(database)/documents/families/$(request.resource.data.familyId));
+      allow update: if isAuthenticated() && 
+                    isFamilyOwner(resource.data.familyId) &&
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) &&
+                    request.resource.data.status in ['approved', 'rejected'];
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
     match /growthTasks/{taskId} {
       allow read: if isAuthenticated() && (resource == null || isFamilyMember(resource.data.familyId) || isAdmin());
       allow create: if (isParent() || isAdmin()) && (request.resource == null || isFamilyMember(request.resource.data.familyId) || isAdmin()) && isValidGrowthTask(request.resource.data);
@@ -437,6 +458,12 @@ service cloud.firestore {
       allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
       allow create: if isAuthenticated();
       allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
     match /private_messages/{messageId} {

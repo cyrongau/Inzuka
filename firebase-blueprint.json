@@ -379,6 +379,21 @@
         "createdAt": { "type": "string", "format": "date-time" }
       }
     },
+    "JoinRequest": {
+      "title": "Family Join Request",
+      "description": "A request from a user to join a specific family group.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "familyId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["familyId", "userId", "status"]
+    },
     "Community": {
       "title": "Community Network",
       "description": "A group of households or individuals (Chama, Family Network, Neighbourhood).",
@@ -670,6 +685,10 @@
     "/receipts/{receiptId}": {
       "schema": "Receipt",
       "description": "Scanned document receipts"
+    },
+    "/joinRequests/{requestId}": {
+      "schema": "JoinRequest",
+      "description": "Requests to join family groups"
     },
     "/growthTasks/{taskId}": {
       "schema": "GrowthTask",

@@ -214,7 +214,7 @@ export default function Profile({ user, profile: initialProfile }: { user: AuthU
       
     } catch (err) {
       setOnboardingError('Failed to create family group.');
-      console.error(err);
+      handleFirestoreError(err, OperationType.WRITE, 'families');
     } finally {
       setIsCreatingFamily(false);
     }
@@ -250,7 +250,8 @@ export default function Profile({ user, profile: initialProfile }: { user: AuthU
       }
 
       // Create Join Request instead of auto-joining
-      await setDoc(doc(collection(db, 'joinRequests')), {
+      const requestPath = 'joinRequests';
+      await setDoc(doc(collection(db, requestPath)), {
         familyId: targetFamily.id,
         userId: user.uid,
         userName: profile?.displayName || user.displayName || 'Unknown',
@@ -263,7 +264,7 @@ export default function Profile({ user, profile: initialProfile }: { user: AuthU
       setInviteCodeInput('');
     } catch (err) {
       setOnboardingError('An error occurred while joining. Please try again.');
-      console.error(err);
+      handleFirestoreError(err, OperationType.WRITE, 'joinRequests');
     } finally {
       setIsJoiningFamily(false);
     }
@@ -277,6 +278,7 @@ export default function Profile({ user, profile: initialProfile }: { user: AuthU
       await updateDoc(doc(db, 'users', request.userId), { familyId: family?.id, familyRole: 'Relative' });
     } catch(e) {
        console.error("Failed to approve", e);
+       handleFirestoreError(e, OperationType.WRITE, 'users');
     }
   };
 
@@ -285,6 +287,7 @@ export default function Profile({ user, profile: initialProfile }: { user: AuthU
       await updateDoc(doc(db, 'joinRequests', request.id), { status: 'rejected' });
     } catch(e) {
        console.error("Failed to reject", e);
+       handleFirestoreError(e, OperationType.WRITE, 'joinRequests');
     }
   };
 
