@@ -1,0 +1,352 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // Primitives
+    // =========================================================================
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+    
+    // Strict ID check to prevent resource exhaustion
+    function isValidId(id) { 
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+
+    function isAdmin() {
+      // Basic fallback since cyrongau@gmail.com is listed as admin in the user's initial state
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (request.auth.token.email == "cyrongau@gmail.com" && request.auth.token.email_verified == true)
+      );
+    }
+
+    function isFamilyMember(familyId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/families/$(familyId)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.familyId == familyId;
+    }
+
+    function isFamilyOwner(familyId) {
+      return isSignedIn() && get(/databases/$(database)/documents/families/$(familyId)).data.ownerId == request.auth.uid;
+    }
+
+    // =========================================================================
+    // Validation Helpers
+    // =========================================================================
+
+    // Users
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email']) &&
+             data.uid == request.auth.uid &&
+             data.email is string && data.email.size() <= 200 &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 100)) &&
+             (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 1000)) &&
+             (!('bannerURL' in data) || (data.bannerURL is string && data.bannerURL.size() <= 1000)) &&
+             (!('phoneNumber' in data) || (data.phoneNumber is string && data.phoneNumber.size() <= 30)) &&
+             (!('mpesaPhoneNumber' in data) || (data.mpesaPhoneNumber is string && data.mpesaPhoneNumber.size() <= 30)) &&
+             (!('familyRole' in data) || data.familyRole in ["Father", "Mother", "Guardian", "Wife", "Husband", "Son", "Daughter", "Brother", "Sister", "Grandparent", "Relative", "Help"]) &&
+             (!('familyId' in data) || data.familyId is string) &&
+             (!('familyStatus' in data) || data.familyStatus in ["active", "suspended", "invited"]) &&
+             (!('isVerified' in data) || data.isVerified is bool) &&
+             (!('idDocumentUrl' in data) || (data.idDocumentUrl is string && data.idDocumentUrl.size() <= 1000)) &&
+             (!('age' in data) || (data.age is number && data.age >= 0 && data.age <= 150)) &&
+             (!('address' in data) || (data.address is string && data.address.size() <= 500)) &&
+             (!('dateOfBirth' in data) || (data.dateOfBirth is string && data.dateOfBirth.size() <= 40)) &&
+             (!('currency' in data) || data.currency in ["KES", "USD", "EUR"]) &&
+             (!('relationships' in data) || (data.relationships is list && data.relationships.size() <= 100));
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming());
+      allow update: if isSignedIn() && (request.auth.uid == userId || isAdmin() || (incoming().familyId != null && isFamilyOwner(incoming().familyId)) || (existing().familyId != null && isFamilyOwner(existing().familyId))) && isValidUser(incoming());
+    }
+
+    // Communities
+    function isValidCommunity(data) {
+      return data.keys().hasAll(['name', 'creatorId']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.creatorId == request.auth.uid &&
+             (!('type' in data) || data.type in ["Chama / Table Banking", "Family Network", "Neighbourhood Association", "Welfare Group"]) &&
+             (!('memberIds' in data) || (data.memberIds is list && data.memberIds.size() <= 2000)) &&
+             (!('moderatorIds' in data) || (data.moderatorIds is list && data.moderatorIds.size() <= 100)) &&
+             (!('memberRoles' in data) || data.memberRoles is map) &&
+             (!('poolBalance' in data) || data.poolBalance is number) &&
+             (!('modules' in data) || (data.modules is list && data.modules.size() <= 30)) &&
+             (!('invitationCode' in data) || (data.invitationCode is string && data.invitationCode.size() <= 20)) &&
+             (!('privacy' in data) || data.privacy in ["public", "private"]) &&
+             (!('createdAt' in data) || data.createdAt is string);
+    }
+    
+    match /communities/{communityId} {
+      allow read: if isSignedIn() && (resource.data.privacy == "public" || (request.auth.uid in resource.data.memberIds) || isAdmin());
+      allow create: if isSignedIn() && isValidCommunity(incoming());
+      allow update: if isSignedIn() && (request.auth.uid in existing().moderatorIds || existing().creatorId == request.auth.uid || isAdmin()) && isValidCommunity(incoming());
+
+      // Community nested paths
+      match /projects/{projectId} {
+         allow read: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/communities/$(communityId)).data.memberIds || isAdmin());
+         allow write: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/communities/$(communityId)).data.moderatorIds || get(/databases/$(database)/documents/communities/$(communityId)).data.creatorId == request.auth.uid || isAdmin());
+      }
+      match /assets/{assetId} {
+         allow read: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/communities/$(communityId)).data.memberIds || isAdmin());
+         allow write: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/communities/$(communityId)).data.moderatorIds || get(/databases/$(database)/documents/communities/$(communityId)).data.creatorId == request.auth.uid || isAdmin());
+      }
+      match /bookings/{bookingId} {
+         allow read: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/communities/$(communityId)).data.memberIds || isAdmin());
+         allow write: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/communities/$(communityId)).data.memberIds || isAdmin());
+      }
+      match /maintenance/{maintId} {
+         allow read: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/communities/$(communityId)).data.memberIds || isAdmin());
+         allow write: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/communities/$(communityId)).data.moderatorIds || get(/databases/$(database)/documents/communities/$(communityId)).data.creatorId == request.auth.uid || isAdmin());
+      }
+      match /tickets/{ticketId} {
+         allow read: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/communities/$(communityId)).data.memberIds || isAdmin());
+         allow write: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/communities/$(communityId)).data.memberIds || isAdmin());
+      }
+      match /records/{recordId} {
+         allow read: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/communities/$(communityId)).data.memberIds || isAdmin());
+         allow write: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/communities/$(communityId)).data.moderatorIds || get(/databases/$(database)/documents/communities/$(communityId)).data.creatorId == request.auth.uid || isAdmin());
+      }
+      match /announcements/{annId} {
+         allow read: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/communities/$(communityId)).data.memberIds || isAdmin());
+         allow write: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/communities/$(communityId)).data.moderatorIds || get(/databases/$(database)/documents/communities/$(communityId)).data.creatorId == request.auth.uid || isAdmin());
+      }
+      match /minutes/{minId} {
+         allow read: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/communities/$(communityId)).data.memberIds || isAdmin());
+         allow write: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/communities/$(communityId)).data.moderatorIds || get(/databases/$(database)/documents/communities/$(communityId)).data.creatorId == request.auth.uid || isAdmin());
+      }
+      match /merryGoRound/{configId} {
+         allow read: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/communities/$(communityId)).data.memberIds || isAdmin());
+         allow write: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/communities/$(communityId)).data.moderatorIds || get(/databases/$(database)/documents/communities/$(communityId)).data.creatorId == request.auth.uid || isAdmin());
+      }
+    }
+
+    // Wallets and Transactions
+    function isValidWallet(data) {
+      return data.keys().hasAll(['userId', 'balance', 'currency']) &&
+             data.userId is string &&
+             data.balance is number &&
+             data.currency is string && data.currency.size() <= 10;
+    }
+    match /wallets/{walletId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin() || isFamilyOwner(get(/databases/$(database)/documents/users/$(resource.data.userId)).data.familyId));
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid && isValidWallet(incoming());
+      allow update: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin() || isFamilyOwner(get(/databases/$(database)/documents/users/$(existing().userId)).data.familyId)) && 
+        isValidWallet(incoming()) && incoming().userId == existing().userId;
+    }
+
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['amount', 'type', 'transactionDate']) &&
+             data.amount is number &&
+             data.type in ["transfer", "payment", "deposit", "withdrawal", "reconciliation"] &&
+             data.transactionDate is string && data.transactionDate.size() <= 40 &&
+             (!('fromUserId' in data) || data.fromUserId is string) &&
+             (!('toUserId' in data) || data.toUserId is string) &&
+             (!('status' in data) || data.status in ["pending", "completed", "failed"]) &&
+             (!('provider' in data) || data.provider is string && data.provider.size() <= 50) &&
+             (!('description' in data) || data.description is string && data.description.size() <= 1000) &&
+             (!('paymentMethod' in data) || data.paymentMethod is string && data.paymentMethod.size() <= 50) &&
+             (!('familyId' in data) || data.familyId is string) &&
+             (!('loggedAt' in data) || data.loggedAt is string && data.loggedAt.size() <= 40) &&
+             (!('metadata' in data) || data.metadata is map) &&
+             (!('createdAt' in data) || (data.createdAt is string || data.createdAt == request.time)) &&
+             (!('updatedAt' in data) || (data.updatedAt is string || data.updatedAt == request.time));
+    }
+
+    match /transactions/{transactionId} {
+      allow read: if isSignedIn() && (
+        resource.data.fromUserId == request.auth.uid || 
+        resource.data.toUserId == request.auth.uid || 
+        ('familyId' in resource.data && isFamilyMember(resource.data.familyId)) ||
+         isAdmin()
+      );
+      // Transactions creation: Must involve auth user
+      allow create: if isSignedIn() && 
+        (incoming().fromUserId == request.auth.uid || incoming().toUserId == request.auth.uid) &&
+        isValidTransaction(incoming());
+      // Updates must not alter amount/from/to, only status
+      allow update: if isSignedIn() && (
+          isAdmin() ||
+          (
+            (existing().fromUserId == request.auth.uid || existing().toUserId == request.auth.uid) &&
+            isValidTransaction(incoming()) &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) &&
+            incoming().amount == existing().amount &&
+            incoming().fromUserId == existing().fromUserId &&
+            incoming().toUserId == existing().toUserId
+          )
+      );
+    }
+    
+    // Families
+    function isValidFamily(data) {
+      return data.keys().hasAll(['name', 'ownerId', 'inviteCode']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+             data.ownerId == request.auth.uid && // Must be creator
+             data.inviteCode is string && data.inviteCode.size() == 6 &&
+             (!('createdAt' in data) || data.createdAt is string);
+    }
+    match /families/{familyId} {
+      allow read: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isFamilyMember(familyId) || isAdmin());
+      allow create: if isSignedIn() && isValidFamily(incoming()) && incoming().ownerId == request.auth.uid;
+      allow update: if isSignedIn() && (existing().ownerId == request.auth.uid || isAdmin()) && isValidFamily(incoming()) && incoming().ownerId == existing().ownerId;
+    }
+
+    // Reports and admin functionality
+    match /reports/{reportId} {
+      allow read: if isSignedIn() && (resource.data.reporterId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && incoming().reporterId == request.auth.uid && incoming().keys().hasAll(['reporterId', 'targetId', 'reason']);
+      allow update: if isAdmin();
+    }
+    match /support_conversations/{convId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAdmin();
+      allow update: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['status']));
+      
+      match /messages/{messageId} {
+        allow read, create: if isSignedIn() && (get(/databases/$(database)/documents/support_conversations/$(convId)).data.userId == request.auth.uid || isAdmin());
+      }
+    }
+
+    // Individual standard collections (Habits, Expenses, Incomes, etc.)
+    match /habits/{habitId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid && incoming().keys().hasAll(['name', 'userId']);
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && incoming().userId == existing().userId;
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+    match /expenses/{expenseId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid && incoming().keys().hasAll(['amount', 'category', 'userId']);
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && incoming().userId == existing().userId;
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+    match /incomes/{incomeId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid && incoming().keys().hasAll(['amount', 'source', 'userId']);
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && incoming().userId == existing().userId;
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+    match /savingsGoals/{goalId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid && incoming().keys().hasAll(['name', 'targetAmount', 'userId']);
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && incoming().userId == existing().userId;
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+    match /loans/{loanId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid && incoming().keys().hasAll(['amount', 'person', 'type', 'userId']);
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && incoming().userId == existing().userId;
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+    match /products/{productId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && incoming().userId == existing().userId;
+    }
+    match /priceRecords/{recordId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+    }
+    match /achievements/{achievementId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isFamilyMember(get(/databases/$(database)/documents/users/$(resource.data.userId)).data.familyId));
+      allow write: if isSignedIn() && isAdmin(); // Assume only admin system or cloud functions writes achievements, or allow via custom strict logic.
+    }
+
+    // Community / Forum Rules
+    match /forumThreads/{threadId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && incoming().authorId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        (existing().authorId == request.auth.uid) || 
+        incoming().diff(existing()).affectedKeys().hasOnly(['views', 'replyCount'])
+      );
+      match /comments/{commentId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn() && incoming().authorId == request.auth.uid;
+      }
+    }
+
+    // Other missing ones simply restricted
+    match /shoppingLists/{listId} {
+      allow read: if isSignedIn() && (!('familyId' in resource.data) || isFamilyMember(resource.data.familyId));
+      allow create: if isSignedIn() && (!('familyId' in incoming()) || isFamilyMember(incoming().familyId));
+      allow update: if isSignedIn() && (!('familyId' in existing()) || isFamilyMember(existing().familyId));
+      allow delete: if isSignedIn() && (!('familyId' in existing()) || isFamilyMember(existing().familyId));
+    }
+
+    match /recipes/{recipeId} {
+      allow read: if isSignedIn() && (!('familyId' in resource.data) || isFamilyMember(resource.data.familyId));
+      allow create: if isSignedIn() && (!('familyId' in incoming()) || isFamilyMember(incoming().familyId));
+      allow update: if isSignedIn() && (!('familyId' in existing()) || isFamilyMember(existing().familyId));
+      allow delete: if isSignedIn() && (!('familyId' in existing()) || isFamilyMember(existing().familyId));
+    }
+    
+    match /chores/{choreId} {
+      allow read: if isSignedIn() && (!('familyId' in resource.data) || isFamilyMember(resource.data.familyId) || resource.data.assignedToUserId == request.auth.uid);
+      allow create: if isSignedIn() && (!('familyId' in incoming()) || isFamilyMember(incoming().familyId));
+      allow update: if isSignedIn() && (!('familyId' in existing()) || isFamilyMember(existing().familyId));
+      allow delete: if isSignedIn() && (!('familyId' in existing()) || isFamilyMember(existing().familyId));
+    }
+    match /mealPlans/{planId} {
+      allow read: if isSignedIn() && (!('familyId' in resource.data) || isFamilyMember(resource.data.familyId));
+      allow create: if isSignedIn() && (!('familyId' in incoming()) || isFamilyMember(incoming().familyId));
+      allow update: if isSignedIn() && (!('familyId' in existing()) || isFamilyMember(existing().familyId));
+      allow delete: if isSignedIn() && (!('familyId' in existing()) || isFamilyMember(existing().familyId));
+    }
+    match /trips/{tripId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || (!('familyId' in resource.data) || isFamilyMember(resource.data.familyId)));
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && existing().userId == request.auth.uid;
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+    match /receipts/{receiptId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow write: if isSignedIn() && (incoming().userId == request.auth.uid || (existing() != null && existing().userId == request.auth.uid));
+    }
+    match /bankAccounts/{accountId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow write: if isSignedIn() && (incoming().userId == request.auth.uid || (existing() != null && existing().userId == request.auth.uid));
+    }
+    match /messages/{messageId} {
+      allow read: if isSignedIn() && isFamilyMember(resource.data.familyId);
+      allow create: if isSignedIn() && incoming().senderId == request.auth.uid && isFamilyMember(incoming().familyId);
+    }
+    match /joinRequests/{requestId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isFamilyOwner(resource.data.familyId));
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid && exists(/databases/$(database)/documents/families/$(incoming().familyId));
+      allow update: if isSignedIn() && isFamilyOwner(existing().familyId) && incoming().diff(existing()).affectedKeys().hasOnly(['status']);
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+    match /growthTasks/{taskId} {
+      allow read: if isSignedIn() && (isFamilyMember(resource.data.familyId) || isAdmin());
+      allow create: if isSignedIn() && (isFamilyMember(incoming().familyId) || isAdmin());
+      allow update: if isSignedIn() && (isFamilyMember(existing().familyId) || isAdmin());
+      allow delete: if isSignedIn() && (isFamilyMember(existing().familyId) || isAdmin());
+    }
+    match /educationContent/{contentId} {
+      allow read: if isSignedIn() && (isFamilyMember(resource.data.familyId) || isAdmin());
+      allow write: if isSignedIn() && (isFamilyMember(existing().familyId) || isAdmin());
+    }
+    match /reportVerifications/{verificationId} {
+      allow read: if true; // Publicly accessible via ID + Access Code client logic? Actually just public read.
+      allow write: if isSignedIn() && isAdmin();
+    }
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && (incoming().userId == request.auth.uid || isAdmin());
+      allow update: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow delete: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+    }
+
+    match /admins/{adminId} {
+       allow read: if isSignedIn();
+       allow write: if false; // Only manageable through Firebase Console or strict custom claims.
+    }
+  }
+}

@@ -25,17 +25,19 @@ import {
   FileSearch,
   Upload,
   Tags,
-  AlertCircle
+  AlertCircle,
+  ShieldCheck,
+  Users
 } from 'lucide-react';
 import { db } from '../../../../lib/firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, increment, setDoc, getDoc, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, increment, setDoc, getDoc, Timestamp, arrayUnion } from 'firebase/firestore';
 import { cn } from '../../../../lib/utils';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import { format, addMonths, addWeeks, addDays } from 'date-fns';
 
 export default function CommunityFinanceModule({ community, user }: { community: any, user: User }) {
-  const [activeSubTab, setActiveSubTab] = useState<'treasury' | 'loans' | 'table-banking'>('treasury');
+  const [activeSubTab, setActiveSubTab] = useState<'treasury' | 'loans' | 'table-banking' | 'membership'>('treasury');
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loanRequests, setLoanRequests] = useState<any[]>([]);
   const [merryGoRound, setMerryGoRound] = useState<any>(null);
@@ -58,7 +60,7 @@ export default function CommunityFinanceModule({ community, user }: { community:
 
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
-  const [transactionType, setTransactionType] = useState<'contribution' | 'savings'>('contribution');
+  const [transactionType, setTransactionType] = useState<'contribution' | 'savings' | 'Membership Registration'>('contribution');
   const [cyclePeriod, setCyclePeriod] = useState('');
 
   const generateCyclePeriods = () => {
@@ -116,6 +118,7 @@ export default function CommunityFinanceModule({ community, user }: { community:
 
   const TRANSACTION_CATEGORIES = [
     'Contribution', 
+    'Membership Registration',
     'Savings', 
     'Loan Repayment', 
     'Loan Disbursement', 
@@ -141,6 +144,7 @@ export default function CommunityFinanceModule({ community, user }: { community:
   const [appealReason, setAppealReason] = useState('');
 
   const isModerator = community.moderatorIds?.includes(user.uid) || community.creatorId === user.uid || community.ownerId === user.uid || community.memberRoles?.[user.uid] === 'admin';
+  const isOfficial = isModerator || community.memberRoles?.[user.uid] === 'chairman' || community.memberRoles?.[user.uid] === 'treasurer' || community.memberRoles?.[user.uid] === 'secretary';
 
   useEffect(() => {
     if (!community.memberIds?.length) return;
@@ -187,7 +191,7 @@ export default function CommunityFinanceModule({ community, user }: { community:
     try {
       const finalNote = cyclePeriod 
         ? `${cyclePeriod} contribution${note ? `: ${note}` : ''}`
-        : (note || (transactionType === 'savings' ? 'Personal savings deposit' : 'Group contribution'));
+        : (note || (transactionType === 'savings' ? 'Personal savings deposit' : transactionType === 'Membership Registration' ? 'New member fee' : 'Group contribution'));
 
       await addDoc(collection(db, 'communities', community.id, 'transactions'), {
         type: transactionType,
@@ -197,12 +201,16 @@ export default function CommunityFinanceModule({ community, user }: { community:
         userName: user.displayName,
         note: finalNote,
         cyclePeriod: cyclePeriod || null,
+        verifiedBy: [],
+        status: (transactionType === 'contribution' || transactionType === 'savings' || transactionType === 'Membership Registration') ? 'completed' : 'pending',
         createdAt: serverTimestamp()
       });
 
-      await updateDoc(doc(db, 'communities', community.id), {
-        poolBalance: increment(val)
-      });
+      if (transactionType === 'contribution' || transactionType === 'savings' || transactionType === 'Membership Registration') {
+        await updateDoc(doc(db, 'communities', community.id), {
+          poolBalance: increment(val)
+        });
+      }
 
       toast.success(`Successfully deposited KES ${val.toLocaleString()} as ${transactionType}`);
       setAmount('');
@@ -394,6 +402,7 @@ export default function CommunityFinanceModule({ community, user }: { community:
       <div className="flex gap-2 p-1 bg-gray-100 dark:bg-zinc-800 rounded-2xl w-fit">
          {[
            { id: 'treasury', label: 'Treasury', icon: DollarSign },
+           { id: 'membership', label: 'Membership', icon: Users },
            { id: 'loans', label: 'Loans', icon: Clock },
            { id: 'table-banking', label: 'Table Banking', icon: RefreshCw }
          ].map(t => (
@@ -413,6 +422,71 @@ export default function CommunityFinanceModule({ community, user }: { community:
 
       {activeSubTab === 'treasury' && (
         <>
+          {/* Dual Authorization / Pending Audits section for Officials */}
+          {isOfficial && transactions.some(t => t.status === 'pending' || (t.verifiedBy?.length < 2 && t.type !== 'contribution' && t.type !== 'savings')) && (
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-900/30 p-8 rounded-[2.5rem] mb-8">
+               <div className="flex items-center gap-3 mb-6">
+                  <ShieldCheck className="w-6 h-6 text-indigo-600" />
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-indigo-600">Pending Official Authorizations (Dual Signature Required)</h3>
+               </div>
+               <div className="space-y-4">
+                  {transactions.filter(t => t.status === 'pending' || (t.verifiedBy?.length < 2 && t.type !== 'contribution' && t.type !== 'savings')).map(t => (
+                    <div key={t.id} className="bg-white dark:bg-zinc-900/50 p-6 rounded-3xl flex items-center justify-between border border-indigo-100 dark:border-indigo-900/20">
+                       <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 rounded-xl flex items-center justify-center">
+                             <Clock className="w-5 h-5" />
+                          </div>
+                          <div>
+                             <p className="text-sm font-black text-black dark:text-white uppercase">{t.userName}</p>
+                             <p className="text-[10px] text-gray-500 font-medium">{t.note} — <span className="font-bold text-indigo-600">KES {t.amount?.toLocaleString()}</span></p>
+                          </div>
+                       </div>
+                       <div className="flex items-center gap-3">
+                          <div className="text-right mr-4">
+                             <p className="text-[8px] font-black uppercase tracking-widest text-gray-400">Signatures: {t.verifiedBy?.length || 0}/2</p>
+                             <div className="flex gap-1 mt-1">
+                                {[1, 2].map(i => (
+                                  <div key={i} className={cn("w-2 h-2 rounded-full", (t.verifiedBy?.length || 0) >= i ? "bg-indigo-600" : "bg-gray-200")} />
+                                ))}
+                             </div>
+                          </div>
+                          {!(t.verifiedBy?.includes(user.uid)) && (
+                            <button 
+                              onClick={async () => {
+                                 try {
+                                    const newVerifiedBy = [...(t.verifiedBy || []), user.uid];
+                                    const updates: any = { verifiedBy: newVerifiedBy };
+                                    
+                                    if (newVerifiedBy.length >= 2) {
+                                       updates.status = 'completed';
+                                       // If it's a disbursement, we might have already deducted or need to deduct now
+                                       // For simplicity, let's assume balance was already adjusted if it was a disbursement
+                                       // Wait, disbursements should ONLY deduct when completed
+                                       if (t.type === 'loan_disbursement' || t.type === 'mgr_payout') {
+                                           await updateDoc(doc(db, 'communities', community.id), {
+                                               poolBalance: increment(-t.amount)
+                                           });
+                                       }
+                                    }
+
+                                    await updateDoc(doc(db, 'communities', community.id, 'transactions', t.id), updates);
+                                    toast.success("Authorization signature added.");
+                                 } catch (e) {
+                                    toast.error("Authorization failed.");
+                                 }
+                              }}
+                              className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all"
+                            >
+                               Authorize
+                            </button>
+                          )}
+                       </div>
+                    </div>
+                  ))}
+               </div>
+            </motion.div>
+          )}
+
           {/* Treasury Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
              <div className="bg-black dark:bg-zinc-900 text-white p-8 rounded-[2.5rem] shadow-xl relative overflow-hidden group border border-transparent dark:border-white/5">
@@ -459,35 +533,65 @@ export default function CommunityFinanceModule({ community, user }: { community:
                <History className="w-5 h-5 text-gray-400 dark:text-gray-500" /> Transaction Ledger
              </h2>
              <div className="space-y-4">
-                {transactions.map(t => (
-                  <div key={t.id} className="flex items-center justify-between p-4 bg-gray-50/50 dark:bg-zinc-800/50 rounded-2xl border border-black/[0.02] dark:border-white/[0.02]">
-                     <div className="flex items-center gap-4">
-                        <div className={cn(
-                          "w-10 h-10 rounded-xl flex items-center justify-center",
-                          t.type === 'contribution' || t.type === 'savings' ? "bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400" : "bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400"
-                        )}>
-                           {t.type === 'contribution' || t.type === 'savings' ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownRight className="w-5 h-5" />}
-                        </div>
-                        <div>
-                           <p className="text-sm font-bold text-black dark:text-white">{t.userName || 'System Auto'}</p>
-                           <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">
-                              {t.type === 'savings' ? <span className="text-blue-500 font-bold uppercase mr-1">[SAVINGS]</span> : null}
-                              {t.type === 'loan_disbursement' ? <span className="text-orange-500 font-bold uppercase mr-1">[LOAN]</span> : null}
-                              {t.type === 'mgr_payout' ? <span className="text-purple-500 font-bold uppercase mr-1">[CYCLE PAYOUT]</span> : null}
-                              {t.note}
-                           </p>
-                        </div>
-                     </div>
-                        <div className="text-right">
-                           <p className={cn("text-sm font-black", t.type === 'contribution' || t.type === 'savings' ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
-                              {t.type === 'contribution' || t.type === 'savings' ? '+' : '-'} {t.amount?.toLocaleString()}
-                           </p>
-                           <p className="text-[10px] text-gray-400 dark:text-gray-500 font-mono">
-                              {t.createdAt?.toDate ? format(t.createdAt.toDate(), 'MMM dd, HH:mm') : '...'}
-                           </p>
-                        </div>
-                  </div>
-                ))}
+                {transactions.map(t => {
+                  const isVerified = t.verifiedBy?.length >= 2;
+                  const canVerify = isModerator && !t.verifiedBy?.includes(user.uid);
+                  
+                  return (
+                    <div key={t.id} className="flex items-center justify-between p-4 bg-gray-50/50 dark:bg-zinc-800/50 rounded-2xl border border-black/[0.02] dark:border-white/[0.02]">
+                       <div className="flex items-center gap-4">
+                          <div className={cn(
+                            "w-10 h-10 rounded-xl flex items-center justify-center relative",
+                            t.type === 'contribution' || t.type === 'savings' || t.type === 'Membership Registration' ? "bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400" : "bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400"
+                          )}>
+                             {t.type === 'contribution' || t.type === 'savings' || t.type === 'Membership Registration' ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownRight className="w-5 h-5" />}
+                             {isVerified && <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full p-0.5"><CheckCircle2 className="w-2.5 h-2.5" /></div>}
+                          </div>
+                          <div>
+                             <div className="flex items-center gap-2">
+                                <p className="text-sm font-bold text-black dark:text-white">{t.userName || 'System Auto'}</p>
+                                {isVerified && <span className="text-[6px] font-black uppercase bg-blue-100 text-blue-600 px-1 rounded-sm tracking-tighter">Audited</span>}
+                             </div>
+                             <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">
+                                {t.type === 'savings' ? <span className="text-blue-500 font-bold uppercase mr-1">[SAVINGS]</span> : null}
+                                {t.type === 'loan_disbursement' ? <span className="text-orange-500 font-bold uppercase mr-1">[LOAN]</span> : null}
+                                {t.type === 'mgr_payout' ? <span className="text-purple-500 font-bold uppercase mr-1">[CYCLE PAYOUT]</span> : null}
+                                {t.type === 'Membership Registration' ? <span className="text-indigo-500 font-bold uppercase mr-1">[JOIN FEE]</span> : null}
+                                {t.note}
+                             </p>
+                          </div>
+                       </div>
+                       <div className="flex items-center gap-4">
+                          <div className="text-right">
+                             <p className={cn("text-sm font-black", t.type === 'contribution' || t.type === 'savings' || t.type === 'Membership Registration' ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
+                                {t.type === 'contribution' || t.type === 'savings' || t.type === 'Membership Registration' ? '+' : '-'} {t.amount?.toLocaleString()}
+                             </p>
+                             <p className="text-[10px] text-gray-400 dark:text-gray-500 font-mono">
+                                {t.createdAt?.toDate ? format(t.createdAt.toDate(), 'MMM dd, HH:mm') : '...'}
+                             </p>
+                          </div>
+                          {canVerify && (
+                             <button 
+                               onClick={async () => {
+                                  try {
+                                     await updateDoc(doc(db, 'communities', community.id, 'transactions', t.id), {
+                                        verifiedBy: arrayUnion(user.uid)
+                                     });
+                                     toast.success("Transaction verified.");
+                                  } catch (e) {
+                                     toast.error("Failed to verify.");
+                                  }
+                               }}
+                               className="p-2 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black rounded-lg transition-all text-gray-300 dark:text-gray-600"
+                               title="Verify Transaction"
+                             >
+                                <ShieldCheck className="w-4 h-4" />
+                             </button>
+                          )}
+                       </div>
+                    </div>
+                  );
+                })}
              </div>
           </div>
         </>
@@ -966,15 +1070,95 @@ export default function CommunityFinanceModule({ community, user }: { community:
          </div>
       )}
 
+      {activeSubTab === 'membership' && (
+         <div className="space-y-8">
+            <h2 className="text-xl font-bold italic serif flex items-center gap-2 text-black dark:text-white">
+              <Users className="w-5 h-5 text-indigo-500" /> Membership Dues & Status
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+               {[
+                 { label: 'Total Members', value: community.memberIds?.length || 0, color: 'text-black' },
+                 { label: 'Registered Fees Paid', value: transactions.filter(t => t.type === 'Membership Registration').length, color: 'text-green-600' },
+                 { label: 'Pending Registration', value: (community.memberIds?.length || 0) - transactions.filter(t => t.type === 'Membership Registration').length, color: 'text-orange-600' },
+                 { label: 'Registration Income', value: `KES ${transactions.filter(t => t.type === 'Membership Registration').reduce((a, b) => a + b.amount, 0).toLocaleString()}`, color: 'text-indigo-600' }
+               ].map((stat, i) => (
+                  <div key={i} className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-black/5 dark:border-white/5 shadow-sm">
+                     <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">{stat.label}</p>
+                     <p className={cn("text-2xl font-black italic serif", stat.color)}>{stat.value}</p>
+                  </div>
+               ))}
+            </div>
+
+            <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 border border-black/5 dark:border-white/5 shadow-sm overflow-x-auto">
+               <table className="w-full text-left">
+                  <thead>
+                     <tr className="text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-black/5 dark:border-white/5">
+                        <th className="pb-4 px-4 font-black">Member</th>
+                        <th className="pb-4 px-4 font-black">Join Date</th>
+                        <th className="pb-4 px-4 font-black">Reg. Status</th>
+                        <th className="pb-4 px-4 font-black">Last Contribution</th>
+                        <th className="pb-4 px-4 font-black text-right">Actions</th>
+                     </tr>
+                  </thead>
+                  <tbody className="divide-y divide-black/[0.02] dark:divide-white/[0.02]">
+                     {community.memberIds?.slice(0, 50).map((mid: string) => {
+                        const hasPaidReg = transactions.some(t => t.userId === mid && t.type === 'Membership Registration');
+                        const lastTrans = transactions.find(t => t.userId === mid);
+                        
+                        return (
+                           <tr key={mid} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/50 transition-colors">
+                              <td className="py-4 px-4">
+                                 <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 flex items-center justify-center font-bold text-[10px] text-gray-400">
+                                       {userProfiles[mid]?.displayName?.slice(0, 1) || mid.slice(-2)}
+                                    </div>
+                                    <p className="text-sm font-bold text-black dark:text-white">{userProfiles[mid]?.displayName || `Member ${mid.slice(-4)}`}</p>
+                                 </div>
+                              </td>
+                              <td className="py-4 px-4 text-xs text-gray-500">
+                                 {userProfiles[mid]?.createdAt?.toDate ? format(userProfiles[mid].createdAt.toDate(), 'MMM yy') : 'N/A'}
+                              </td>
+                              <td className="py-4 px-4">
+                                 <span className={cn(
+                                    "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest",
+                                    hasPaidReg ? "bg-green-100 text-green-600" : "bg-orange-100 text-orange-600"
+                                 )}>
+                                    {hasPaidReg ? 'Paid' : 'Pending'}
+                                 </span>
+                              </td>
+                              <td className="py-4 px-4 text-xs text-gray-500">
+                                 {lastTrans ? (
+                                    <span>{lastTrans.type} (KES {lastTrans.amount?.toLocaleString()})</span>
+                                 ) : 'None'}
+                              </td>
+                              <td className="py-4 px-4 text-right">
+                                 <button className="p-2 text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+                                    <ChevronRight className="w-4 h-4" />
+                                 </button>
+                              </td>
+                           </tr>
+                        );
+                     })}
+                  </tbody>
+               </table>
+               {community.memberIds?.length > 50 && (
+                  <p className="text-center py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Showing first 50 of {community.memberIds.length} members</p>
+               )}
+            </div>
+         </div>
+      )}
+
       {/* Modals */}
       {showContribute && (
          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-sm">
             <div className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-[3rem] p-10 relative border border-white/10 dark:border-white/5">
                <h2 className="text-2xl font-black serif italic mb-8 text-black dark:text-white">Deposit Funds</h2>
                <form onSubmit={handleContribute} className="space-y-6">
-                  <div className="flex bg-gray-100 dark:bg-zinc-800 p-1 rounded-2xl">
-                     <button type="button" onClick={() => setTransactionType('contribution')} className={cn("flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", transactionType === 'contribution' ? "bg-white dark:bg-zinc-700 shadow-sm text-black dark:text-white" : "text-gray-400")}>Contribution</button>
-                     <button type="button" onClick={() => setTransactionType('savings')} className={cn("flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", transactionType === 'savings' ? "bg-white dark:bg-zinc-700 shadow-sm text-blue-500" : "text-gray-400")}>Shares / Savings</button>
+                  <div className="flex bg-gray-100 dark:bg-zinc-800 p-1 rounded-2xl gap-1">
+                     <button type="button" onClick={() => setTransactionType('contribution')} className={cn("flex-1 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all", transactionType === 'contribution' ? "bg-white dark:bg-zinc-700 shadow-sm text-black dark:text-white" : "text-gray-400")}>Contribution</button>
+                     <button type="button" onClick={() => setTransactionType('savings')} className={cn("flex-1 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all", transactionType === 'savings' ? "bg-white dark:bg-zinc-700 shadow-sm text-blue-500" : "text-gray-400")}>Savings</button>
+                     <button type="button" onClick={() => setTransactionType('Membership Registration')} className={cn("flex-1 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all", transactionType === 'Membership Registration' ? "bg-white dark:bg-zinc-700 shadow-sm text-indigo-500" : "text-gray-400")}>Join Fee</button>
                   </div>
 
                   {transactionType === 'contribution' && merryGoRound && (

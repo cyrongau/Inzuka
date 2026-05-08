@@ -1,9 +1,7 @@
 import express from 'express';
-import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import axios from 'axios';
 import dotenv from 'dotenv';
-import { GoogleGenAI, Type } from "@google/genai";
 
 dotenv.config();
 
@@ -12,85 +10,11 @@ const PORT = 3000;
 
 app.use(express.json({ limit: '50mb' }));
 
-// Gemini AI Setup
-const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
-
-app.post('/api/ai/generate', async (req, res) => {
-    try {
-        const { model: modelName = "gemini-1.5-flash", contents, config } = req.body;
-        if (!process.env.GEMINI_API_KEY) {
-            throw new Error('GEMINI_API_KEY is not configured on the server');
-        }
-
-        // Using the same pattern as client-side for consistency
-        const response = await genAI.models.generateContent({
-          model: modelName,
-          contents: contents,
-          config: config
-        });
-        
-        res.json({ text: response.text });
-    } catch (error: any) {
-        console.error('AI Proxy Error:', error);
-        res.status(500).json({ error: 'AI request failed', details: error.message });
-    }
+// Health check
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok' });
 });
 
-app.post('/api/ai/extract-id', async (req, res) => {
-    try {
-        const { base64Image, mimeType } = req.body;
-        if (!process.env.GEMINI_API_KEY) {
-            throw new Error('GEMINI_API_KEY is not configured on the server');
-        }
-
-        const prompt = `You are an expert identity document verification assistant. 
-        Analyze this identity document (ID Card, Passport, etc.).
-        1. Extract the full name, ID/Passport number, and DATE OF BIRTH.
-        2. For Date of Birth, carefully look for "Date of Birth", "DOB", or "Date de naissance". In many IDs, this is formatted as DD-MM-YYYY or DD.MM.YYYY.
-        3. Calculate the age accurately. Today's date is April 25, 2026.
-           - Extract the birth year from the DOB.
-           - Subtract birth year from 2026.
-           - Adjust if birth month/day hasn't occurred yet in 2026.
-        4. Accuracy is mission-critical. If any field is unclear, mark it as "Unknown".
-        5. The extracted age MUST be an integer.
-        
-        IMPORTANT: Do not default to 24. Calculate it based on the extracted DOB.
-        Format the Date of Birth as DD-MM-YYYY.`;
-
-        const response = await genAI.models.generateContent({
-            model: "gemini-1.5-flash",
-            contents: {
-                parts: [
-                    { inlineData: { data: base64Image.split(',')[1] || base64Image, mimeType } },
-                    { text: prompt }
-                ]
-            },
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: Type.OBJECT,
-                    properties: {
-                        fullName: { type: Type.STRING },
-                        idNumber: { type: Type.STRING },
-                        dateOfBirth: { type: Type.STRING },
-                        age: { type: Type.NUMBER },
-                        gender: { type: Type.STRING },
-                        nationality: { type: Type.STRING },
-                        confidence: { type: Type.NUMBER }
-                    },
-                    required: ["fullName", "idNumber", "dateOfBirth", "age"]
-                }
-            }
-        });
-
-        res.json(JSON.parse(response.text.trim()));
-    } catch (error: any) {
-        console.error('AI Extraction Error:', error);
-        res.status(500).json({ error: 'AI Extraction failed', details: error.message });
-    }
-});
-
-// M-Pesa Integration Helpers
 const getMpesaToken = async () => {
     const consumerKey = process.env.MPESA_CONSUMER_KEY;
     const consumerSecret = process.env.MPESA_CONSUMER_SECRET;
@@ -160,24 +84,21 @@ app.post('/api/mpesa/callback', (req, res) => {
     res.json({ ResultCode: 0, ResultDesc: 'Success' });
 });
 
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok' });
-});
-
 async function startServer() {
     if (process.env.NODE_ENV !== 'production') {
+        const { createServer: createViteServer } = await import('vite');
         const vite = await createViteServer({
             server: { middlewareMode: true },
             appType: 'spa',
         });
         app.use(vite.middlewares);
-    } else {
-        const distPath = path.join(process.cwd(), 'dist');
-        app.use(express.static(distPath));
-        app.get('*', (req, res) => {
-            res.sendFile(path.join(distPath, 'index.html'));
-        });
-    }
+  } else {
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    app.get('*', (_req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  }
 
     app.listen(PORT, '0.0.0.0', () => {
         console.log(`Server running on http://0.0.0.0:${PORT}`);

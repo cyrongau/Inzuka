@@ -252,9 +252,7 @@ export default function RecipeBookModal({ onClose, familyId, onPlanRecipe }: { o
                           {viewingRecipe.id && !viewingRecipe.id.startsWith('comm-') && (
                             <button 
                               onClick={() => {
-                                if (window.confirm("Are you sure you want to delete this personalized recipe?")) {
-                                  handleDeleteRecipe(viewingRecipe);
-                                }
+                                handleDeleteRecipe(viewingRecipe);
                               }}
                               className="flex items-center gap-2 text-xs font-bold text-red-500 hover:text-red-700 transition-colors bg-red-50 dark:bg-red-900/10 px-4 py-2 rounded-xl"
                             >

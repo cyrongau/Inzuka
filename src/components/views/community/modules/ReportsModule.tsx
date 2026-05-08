@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
-import { FileDown, Table, Users, BarChart3, Calendar, ShieldCheck, ExternalLink, Printer, Download, QrCode, Lock, X } from 'lucide-react';
+import { FileDown, Table, Users, BarChart3, Calendar, ShieldCheck, ExternalLink, Printer, Download, QrCode, Lock, X, Package } from 'lucide-react';
 import { db } from '../../../../lib/firebase';
 import { collection, query, onSnapshot, orderBy, addDoc, serverTimestamp } from 'firebase/firestore';
 import { cn } from '../../../../lib/utils';
@@ -13,6 +13,7 @@ export default function ReportsModule({ community, user }: { community: any, use
   const [transactions, setTransactions] = useState<any[]>([]);
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [minutes, setMinutes] = useState<any[]>([]);
+  const [assets, setAssets] = useState<any[]>([]);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [currentVerification, setCurrentVerification] = useState<{ id: string, accessCode: string, url: string } | null>(null);
 
@@ -26,10 +27,14 @@ export default function ReportsModule({ community, user }: { community: any, use
     const unsubMin = onSnapshot(query(collection(db, 'communities', community.id, 'minutes'), orderBy('createdAt', 'desc')), (snap) => {
       setMinutes(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     });
+    const unsubAssets = onSnapshot(query(collection(db, 'communities', community.id, 'assets'), orderBy('name', 'asc')), (snap) => {
+      setAssets(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
     return () => {
       unsubTrans();
       unsubAnn();
       unsubMin();
+      unsubAssets();
     };
   }, [community.id]);
 
@@ -71,36 +76,69 @@ export default function ReportsModule({ community, user }: { community: any, use
   };
 
   const exportMembersCSV = () => {
-     try {
-        const headers = ['Member Name', 'Role', 'Access Level'];
-        const rows = community.memberIds.map((mid: string) => [
-          mid, // Using ID as name stub for now or fetch member names if needed
-          community.memberRoles?.[mid] || 'member',
-          community.moderatorIds?.includes(mid) ? 'Moderator' : 'Standard'
-        ]);
+    try {
+      const headers = ['Member Name', 'Role', 'Access Level'];
+      const rows = community.memberIds.map((mid: string) => [
+        mid, // Using ID as name stub for now or fetch member names if needed
+        community.memberRoles?.[mid] || 'member',
+        community.moderatorIds?.includes(mid) ? 'Moderator' : 'Standard'
+      ]);
 
-        const footer = `\n\n'Inzuka' Community Hub © 2026 . All Rights Reserved`;
-        const csvContent = [
-          `Report: Member Registry for ${community.name}`,
-          `Generated: ${new Date().toLocaleString()}\n`,
-          headers.join(','),
-          ...rows.map(r => r.join(',')),
-          footer
-        ].join('\n');
+      const footer = `\n\n'Inzuka' Community Hub © 2026 . All Rights Reserved`;
+      const csvContent = [
+        `Report: Member Registry for ${community.name}`,
+        `Generated: ${new Date().toLocaleString()}\n`,
+        headers.join(','),
+        ...rows.map(r => r.join(',')),
+        footer
+      ].join('\n');
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `${community.name}_members_${new Date().toISOString().split('T')[0]}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success("Member list exported.");
-     } catch(e) {
-        toast.error("Export failed.");
-     }
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `${community.name}_members_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Member list exported.");
+    } catch (e) {
+      toast.error("Export failed.");
+    }
+  };
+
+  const exportAssetsCSV = () => {
+    try {
+      const headers = ['Asset Name', 'Category', 'Serial', 'Estimated Value', 'Status', 'Current Holder'];
+      const rows = assets.map(a => [
+        a.name,
+        a.category,
+        a.serial || 'N/A',
+        a.value || 0,
+        a.status,
+        a.currentHolderId || 'Group'
+      ]);
+
+      const footer = `\n\n'Inzuka' Community Hub © 2026 . All Rights Reserved`;
+      const csvContent = [
+        `Report: Asset Inventory for ${community.name}`,
+        `Generated: ${new Date().toLocaleString()}\n`,
+        headers.join(','),
+        ...rows.map(r => r.join(',')),
+        footer
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `${community.name}_assets_${new Date().toISOString().split('T')[0]}.csv`);
+      link.click();
+      toast.success("Asset inventory exported.");
+    } catch (e) {
+      toast.error("Export failed.");
+    }
   };
 
   const generateVerificationToken = async (type: 'financial' | 'members') => {

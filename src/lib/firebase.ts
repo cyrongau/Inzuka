@@ -1,29 +1,13 @@
 import { initializeApp } from 'firebase/app';
-import * as firebaseAuth from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
+import { getStorage } from 'firebase/storage';
 import firebaseConfig from '../../firebase-applet-config.json';
-
-const { getAuth, initializeAuth } = firebaseAuth;
-const getReactNativePersistence = (firebaseAuth as any).getReactNativePersistence;
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
-
-// Initialize Auth with persistence for native platforms
-let authInstance;
-
-if (Platform.OS === 'web') {
-  authInstance = getAuth(app);
-} else {
-  const persistence = getReactNativePersistence ? getReactNativePersistence(AsyncStorage) : undefined;
-  authInstance = initializeAuth(app, {
-    persistence
-  });
-}
-
-export const auth = authInstance;
+export const auth = getAuth(app);
+export const storage = getStorage(app);
 
 // Test connection
 async function testConnection() {

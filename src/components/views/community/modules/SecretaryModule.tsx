@@ -12,7 +12,8 @@ import {
   ShieldCheck,
   Globe,
   Trash2,
-  MoreVertical
+  MoreVertical,
+  X
 } from 'lucide-react';
 import { db } from '../../../../lib/firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
@@ -20,6 +21,8 @@ import { cn } from '../../../../lib/utils';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
+
+import SmartSearch from '../../../ui/SmartSearch';
 
 export default function SecretaryModule({ community, user }: { community: any, user: User }) {
   const [activeView, setActiveView] = useState<'announcements' | 'minutes'>('announcements');
@@ -35,9 +38,35 @@ export default function SecretaryModule({ community, user }: { community: any, u
 
   const [minNotes, setMinNotes] = useState('');
   const [minDate, setMinDate] = useState('');
+  const [attendeeIds, setAttendeeIds] = useState<string[]>([]);
+  const [attendeeSearch, setAttendeeSearch] = useState('');
+  const [userProfiles, setUserProfiles] = useState<Record<string, any>>({});
 
   const isSecretary = community.memberRoles?.[user.uid] === 'secretary' || community.creatorId === user.uid;
   const isAdmin = community.creatorId === user.uid || community.moderatorIds?.includes(user.uid);
+
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      if (!community.memberRoles) return;
+      const adminIds = Object.keys(community.memberRoles).filter(mid => community.memberRoles[mid] !== 'member');
+      const profiles: Record<string, any> = {};
+      
+      for (const mid of adminIds) {
+        if (!userProfiles[mid]) {
+          try {
+            const { getDoc, doc } = await import('firebase/firestore');
+            const d = await getDoc(doc(db, 'users', mid));
+            if (d.exists()) profiles[mid] = d.data();
+          } catch(e) {}
+        }
+      }
+      
+      if (Object.keys(profiles).length > 0) {
+        setUserProfiles(prev => ({ ...prev, ...profiles }));
+      }
+    };
+    fetchProfiles();
+  }, [community.memberRoles]);
 
   useEffect(() => {
     const unsubAnn = onSnapshot(query(collection(db, 'communities', community.id, 'announcements'), orderBy('createdAt', 'desc')), (snap) => {
@@ -81,11 +110,12 @@ export default function SecretaryModule({ community, user }: { community: any, u
         notes: minNotes,
         meetingDate: minDate,
         secretaryId: user.uid,
-        attendees: community.memberIds, // Simplification
+        attendeeCount: attendeeIds.length,
+        attendees: attendeeIds,
         createdAt: serverTimestamp()
       });
       toast.success("Meeting minutes filed successfully.");
-      setMinNotes(''); setMinDate(''); setShowAddMinutes(false);
+      setMinNotes(''); setMinDate(''); setAttendeeIds([]); setShowAddMinutes(false);
     } catch (e) {
       toast.error("Failed to file minutes.");
     }
@@ -198,6 +228,7 @@ export default function SecretaryModule({ community, user }: { community: any, u
                              <div>
                                 <p className="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 tracking-widest">Meeting Notes</p>
                                 <h4 className="text-xl font-bold italic serif tracking-tight text-black dark:text-white">Session: {new Date(m.meetingDate).toLocaleDateString(undefined, { dateStyle: 'long' })}</h4>
+                                {m.attendeeCount && <p className="text-[10px] font-bold text-gray-400">Attendance: {m.attendeeCount} Members</p>}
                              </div>
                           </div>
                           <div className="bg-gray-50/50 dark:bg-zinc-800/50 p-6 rounded-3xl border border-black/[0.02] dark:border-white/[0.02]">
@@ -219,17 +250,27 @@ export default function SecretaryModule({ community, user }: { community: any, u
                   <Users className="w-4 h-4" /> Group Admins
                </h4>
                <div className="space-y-4">
-                  {Object.entries(community.memberRoles || {}).filter(([_, role]) => role !== 'member').map(([mid, role]) => (
+                  {Object.entries(community.memberRoles || {}).filter(([_, role]) => role !== 'member').map(([mid, role]) => {
+                     const profile = userProfiles[mid];
+                     const displayName = profile?.displayName || community.memberNames?.[mid] || `Member ${mid.slice(-4)}`;
+                     const photoUrl = profile?.photoURL;
+                     
+                     return (
                      <div key={mid} className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 flex items-center justify-center font-bold text-gray-400 dark:text-gray-500 text-[10px]">
-                           {mid.slice(-2)}
-                        </div>
+                        {photoUrl ? (
+                           <img src={photoUrl} alt={displayName} className="w-10 h-10 rounded-xl object-cover border border-black/5 dark:border-white/5 shadow-sm" />
+                        ) : (
+                           <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 flex items-center justify-center font-bold text-gray-400 dark:text-gray-500 text-[10px] uppercase">
+                              {displayName.charAt(0)}
+                           </div>
+                        )}
                         <div>
-                           <p className="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 tracking-widest">{role as string}</p>
-                           <p className="text-xs font-bold text-gray-500 dark:text-gray-400">Admin</p>
+                           <p className="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 tracking-widest text-left">{role as string}</p>
+                           <p className="text-xs font-bold text-gray-800 dark:text-gray-200">{displayName}</p>
                         </div>
                      </div>
-                  ))}
+                     );
+                  })}
                </div>
             </div>
 
@@ -275,6 +316,43 @@ export default function SecretaryModule({ community, user }: { community: any, u
                   <div className="space-y-2">
                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 px-2">Meeting Date</label>
                      <input type="date" required value={minDate} onChange={e => setMinDate(e.target.value)} className="w-full bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 rounded-2xl p-4 font-bold outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 transition-all text-black dark:text-white" />
+                  </div>
+                  <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 px-2">Attendance (Total: {attendeeIds.length})</label>
+                     <div className="space-y-3 z-50">
+                        <SmartSearch 
+                           data={community.memberIds?.map((mid: string) => ({
+                              id: mid,
+                              name: userProfiles[mid]?.displayName || community.memberNames?.[mid] || `Member ${mid.slice(-4)}`,
+                              subtitle: mid.slice(-6),
+                              imageUrl: userProfiles[mid]?.photoURL
+                           })) || []}
+                           value={attendeeSearch}
+                           onChange={setAttendeeSearch}
+                           onSelect={(member) => {
+                              setAttendeeSearch('');
+                              setAttendeeIds(prev => prev.includes(member.id) ? prev : [...prev, member.id]);
+                           }}
+                           placeholder="Search members for roll call..." 
+                           className="w-full relative"
+                           inputClassName="w-full bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 rounded-2xl p-4 text-xs font-bold outline-none text-black dark:text-white"
+                        />
+                        {attendeeIds.length > 0 && (
+                           <div className="flex flex-wrap gap-2 p-2 bg-gray-50 dark:bg-zinc-800/50 rounded-2xl border border-black/5 dark:border-white/5">
+                              {attendeeIds.map((mid: string) => (
+                                 <button
+                                    key={mid}
+                                    type="button"
+                                    onClick={() => setAttendeeIds(prev => prev.filter(id => id !== mid))}
+                                    className="flex items-center gap-2 p-2 bg-indigo-600 text-white rounded-xl text-[10px] font-bold transition-all border border-transparent shadow-sm hover:bg-indigo-700"
+                                 >
+                                    <span className="truncate">{userProfiles[mid]?.displayName?.split(' ')[0] || mid.slice(-6)}</span>
+                                    <X className="w-3 h-3" />
+                                 </button>
+                              ))}
+                           </div>
+                        )}
+                     </div>
                   </div>
                   <div className="space-y-2">
                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 px-2">Meeting Notes (Markdown)</label>

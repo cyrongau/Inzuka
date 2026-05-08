@@ -23,24 +23,29 @@ import { cn } from '../../../../lib/utils';
 export default function CommunityChatModule({ community, user }: { community: any, user: User }) {
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [messageLimit, setMessageLimit] = useState(100);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const q = query(
       collection(db, 'communities', community.id, 'messages'),
-      orderBy('createdAt', 'asc'),
-      limit(100)
+      orderBy('createdAt', 'desc'),
+      limit(messageLimit)
     );
 
     const unsub = onSnapshot(q, (snap) => {
-      setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-      setTimeout(() => {
-        scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-      }, 100);
+      const msgs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setMessages(msgs.reverse());
+      // Only scroll on initial load (when limit is default)
+      if (messageLimit === 100) {
+        setTimeout(() => {
+          scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+        }, 100);
+      }
     });
 
     return () => unsub();
-  }, [community.id]);
+  }, [community.id, messageLimit]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,6 +84,16 @@ export default function CommunityChatModule({ community, user }: { community: an
 
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4">
+          {messages.length >= messageLimit && (
+            <div className="text-center pb-4">
+               <button 
+                 onClick={() => setMessageLimit(prev => prev + 100)}
+                 className="bg-white dark:bg-zinc-800 px-4 py-2 rounded-full text-xs font-bold text-gray-500 hover:text-black dark:hover:text-white transition-colors border border-black/5 dark:border-white/5 shadow-sm"
+               >
+                 Load Earlier Messages
+               </button>
+            </div>
+          )}
           {messages.map((m, i) => {
              const isMe = m.userId === user.uid;
              const role = community.memberRoles?.[m.userId] || (community.creatorId === m.userId ? 'admin' : 'member');

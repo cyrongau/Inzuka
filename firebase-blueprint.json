@@ -547,9 +547,108 @@
         "createdAt": { "type": "string", "format": "date-time" }
       }
     },
+    "CommunityAsset": {
+      "title": "Group Resource/Asset",
+      "description": "An asset owned by the SHG (e.g. tents, chairs, tractor, land).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "communityId": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "value": { "type": "number", "description": "Current valuation" },
+        "condition": { "type": "string", "enum": ["excellent", "good", "fair", "poor", "damaged"] },
+        "assignedTo": { "type": "string", "description": "UID of member currently holding the asset" },
+        "assignedBy": { "type": "string", "description": "UID of official who assigned it" },
+        "location": { "type": "string" },
+        "serialNumber": { "type": "string" },
+        "status": { "type": "string", "enum": ["available", "in-use", "maintenance", "retired", "hired-out"] },
+        "bookingsCount": { "type": "number" },
+        "totalIncome": { "type": "number", "description": "Total hiring revenue generated" },
+        "purchaseDate": { "type": "string", "format": "date" },
+        "imageUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["communityId", "name", "category"]
+    },
+    "AssetBooking": {
+      "title": "Asset Usage/Hiring Record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "assetId": { "type": "string" },
+        "assetName": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "startDate": { "type": "string", "format": "date-time" },
+        "endDate": { "type": "string", "format": "date-time" },
+        "purpose": { "type": "string" },
+        "type": { "type": "string", "enum": ["member-use", "external-hiring"] },
+        "fee": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "approved", "ongoing", "completed", "cancelled"] },
+        "approvedBy": { "type": "string" },
+        "paymentStatus": { "type": "string", "enum": ["unpaid", "partially-paid", "paid"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "AssetMaintenance": {
+      "title": "Asset Repair & Maintenance Record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "assetId": { "type": "string" },
+        "type": { "type": "string", "enum": ["repair", "routine", "replacement"] },
+        "description": { "type": "string" },
+        "cost": { "type": "number" },
+        "reportedBy": { "type": "string" },
+        "resolvedAt": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["reported", "in-progress", "resolved"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "CommunityTicket": {
+      "title": "Community Issue Ticket",
+      "description": "A dispute or issue raised by a member for resolution.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "communityId": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string", "enum": ["finance", "asset", "governance", "other"] },
+        "priority": { "type": "string", "enum": ["low", "medium", "high", "urgent"] },
+        "status": { "type": "string", "enum": ["open", "investigating", "resolved", "closed"] },
+        "resolution": { "type": "string" },
+        "resolvedBy": { "type": "string" },
+        "resolvedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "CommunityRecord": {
+      "title": "Community Official Record",
+      "description": "A formal document or record (e.g. Constitution, Reg Certificate).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "communityId": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string", "enum": ["legal", "financial", "governance", "minutes", "other"] },
+        "type": { "type": "string", "description": "e.g. Constitution, Paybill Details" },
+        "fileUrl": { "type": "string" },
+        "extractedText": { "type": "string", "description": "AI-processed content" },
+        "isVerified": { "type": "boolean" },
+        "uploadedBy": { "type": "string" },
+        "metadata": { "type": "object", "description": "Key-value pairs extracted by AI" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["communityId", "title", "category"]
+    },
     "Initiative": {
-      "title": "Community Initiative",
-      "description": "A specific project or goal within a community.",
+      "title": "Community project / Initiative",
+      "description": "A specific project or goal within a community (e.g. Agri-biz, transport, farming).",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
@@ -557,11 +656,17 @@
         "communityName": { "type": "string" },
         "title": { "type": "string" },
         "description": { "type": "string" },
+        "category": { "type": "string", "enum": ["Agri-Business", "Farming", "Transport", "Real Estate", "Service Delivery", "Education", "Health", "Other"] },
+        "objective": { "type": "string", "description": "The primary goal of the project" },
         "leadId": { "type": "string" },
         "leadName": { "type": "string" },
-        "status": { "type": "string", "enum": ["planning", "in-progress", "completed", "on-hold"] },
-        "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+        "status": { "type": "string", "enum": ["planning", "in-progress", "completed", "on-hold", "cancelled"] },
+        "priority": { "type": "string", "enum": ["low", "medium", "high", "urgent"] },
         "targetDate": { "type": "string", "format": "date-time" },
+        "startDate": { "type": "string", "format": "date-time" },
+        "budget": { "type": "number", "description": "Estimated cost" },
+        "actualSpent": { "type": "number" },
+        "actualIncome": { "type": "number" },
         "progress": { "type": "number", "minimum": 0, "maximum": 100 },
         "gallery": { 
           "type": "array", 
@@ -576,15 +681,80 @@
         },
         "taskCount": { "type": "number" },
         "completedTaskCount": { "type": "number" },
+        "milestoneCount": { "type": "number" },
+        "completedMilestoneCount": { "type": "number" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["communityId", "title", "status"]
-    }
+      "required": ["communityId", "title", "status", "category"]
+    },
+    "ProjectTask": {
+      "title": "Project Task",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "projectId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "assignedTo": { "type": "array", "items": { "type": "string" }, "description": "UIDs of assigned members" },
+        "status": { "type": "string", "enum": ["todo", "in-progress", "completed", "blocked"] },
+        "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+        "dueDate": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "ProjectMilestone": {
+      "title": "Project Milestone",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "projectId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "targetDate": { "type": "string", "format": "date-time" },
+        "isCompleted": { "type": "boolean" },
+        "completedAt": { "type": "string", "format": "date-time" },
+        "weight": { "type": "number", "description": "Impact on overall project progress (0-100)" }
+      }
+    },
+    "ProjectTransaction": {
+      "title": "Project Financial Entry",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "projectId": { "type": "string" },
+        "amount": { "type": "number" },
+        "type": { "type": "string", "enum": ["income", "expense"] },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "recordedBy": { "type": "string" }
+      }
+    },
   },
   "firestore": {
     "/communities/{commId}/projects/{projectId}": {
       "schema": "Initiative",
       "description": "Project initiatives within a group"
+    },
+    "/communities/{commId}/assets/{assetId}": {
+      "schema": "CommunityAsset",
+      "description": "Inventory of tangible group assets"
+    },
+    "/communities/{commId}/bookings/{bookingId}": {
+      "schema": "AssetBooking",
+      "description": "Hiring and usage logs"
+    },
+    "/communities/{commId}/maintenance/{maintId}": {
+      "schema": "AssetMaintenance",
+      "description": "Repair and maintenance logs"
+    },
+    "/communities/{commId}/tickets/{ticketId}": {
+      "schema": "CommunityTicket",
+      "description": "Dispute and resolution tickets"
+    },
+    "/communities/{commId}/records/{recordId}": {
+      "schema": "CommunityRecord",
+      "description": "Stored group documents and AI-scrapped data"
     },
     "/users/{userId}": {
       "schema": "User",

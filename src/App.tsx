@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
-import { doc, getDoc, setDoc, onSnapshot, collection, query, where, orderBy, limit } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, collection, query, where, orderBy, limit, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
 
@@ -77,7 +77,39 @@ export default function App() {
   const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
+    // Request push notification permission
+    if ('Notification' in window && Notification.permission === 'default' && profile) {
+      // Slightly delay asking to ensure app is loaded visually
+      setTimeout(() => {
+        Notification.requestPermission().then(permission => {
+          if (permission === 'granted') {
+            console.log('Notification permission granted.');
+            // Optionally, save FCM token here in future
+          }
+        });
+      }, 5000);
+    }
+  }, [profile]);
+
+  useEffect(() => {
     if (!user) return;
+
+    // Presence heartbeat
+    let lastActiveUpdate = Date.now();
+    const updateActive = () => {
+      const now = Date.now();
+      if (now - lastActiveUpdate > 60000) { // Throttle to once per minute
+        lastActiveUpdate = now;
+        updateDoc(doc(db, 'users', user.uid), { lastActive: serverTimestamp() }).catch(() => {});
+      }
+    };
+    
+    // Initial update
+    updateDoc(doc(db, 'users', user.uid), { lastActive: serverTimestamp() }).catch(() => {});
+
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(e => window.addEventListener(e, updateActive, { passive: true }));
+
     const q = query(
       collection(db, 'notifications'),
       where('userId', '==', user.uid),
@@ -267,7 +299,7 @@ export default function App() {
       case 'shopping': return <Shopping user={user} profile={profile} />;
       case 'chores': return <Chores user={user} profile={profile} />;
       case 'meals': return <MealPlanning user={user} profile={profile} />;
-      case 'chat': return <Chat user={user} profile={profile} />;
+      case 'chat': return <Chat user={user} profile={profile} notifications={notifications} />;
       case 'wallet': return <WalletView user={user} profile={profile} />;
       case 'reports': return <Reports user={user} profile={profile} />;
       case 'budget': return <Budget user={user} profile={profile} />;
@@ -324,7 +356,9 @@ export default function App() {
           </div>
 
           <nav className="flex-1 space-y-1">
-            {menuItems.map((item) => (
+            {menuItems.map((item) => {
+              const hasUnread = item.id === 'chat' ? notifications.some(n => !n.isRead && n.type === 'message') : false;
+              return (
               <button
                 key={item.id}
                 onClick={() => {
@@ -332,17 +366,25 @@ export default function App() {
                   if (window.innerWidth < 1024) setIsSidebarOpen(false);
                 }}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all group",
+                  "relative w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all group",
                   activeTab === item.id 
                     ? "bg-black dark:bg-white text-white dark:text-black shadow-md shadow-black/10 dark:shadow-white/10" 
                     : "text-gray-500 hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white",
                   isSidebarCollapsed && "justify-center px-0"
                 )}
               >
-                <item.icon className={cn("w-5 h-5 shrink-0", activeTab === item.id ? "text-white dark:text-black" : "text-gray-400 group-hover:text-black dark:group-hover:text-white")} />
-                {!isSidebarCollapsed && <span className="font-medium">{item.label}</span>}
+                <div className="flex items-center gap-3">
+                  <item.icon className={cn("w-5 h-5 shrink-0", activeTab === item.id ? "text-white dark:text-black" : "text-gray-400 group-hover:text-black dark:group-hover:text-white")} />
+                  {!isSidebarCollapsed && <span className="font-medium">{item.label}</span>}
+                </div>
+                {!isSidebarCollapsed && hasUnread && (
+                  <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></div>
+                )}
+                {isSidebarCollapsed && hasUnread && (
+                  <div className="absolute right-2 top-2 w-2 h-2 bg-red-500 rounded-full"></div>
+                )}
               </button>
-            ))}
+            )})}
             
             {profile?.isSystemAdmin && (
               <div className="pt-4 mt-4 border-t border-black/5">

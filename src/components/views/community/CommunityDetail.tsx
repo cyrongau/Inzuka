@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
 import { 
-  ArrowLeft, 
+  ArrowLeft,
+  Briefcase, 
   Settings, 
   MessageCircle, 
   Wallet, 
@@ -9,27 +10,38 @@ import {
   Calendar,
   Users,
   Shield,
-  Plus,
+  ChevronDown,
+  MoreHorizontal,
+  ChevronLeft,
+  ChevronRight,
+  Package,
+  BookOpen,
+  Gavel,
   BarChart3,
+  Upload,
   X,
   Layout,
-  Upload,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Link
 } from 'lucide-react';
-import { db } from '../../../lib/firebase';
+import { db, storage } from '../../../lib/firebase';
 import { doc, onSnapshot, updateDoc, arrayUnion } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { cn } from '../../../lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 
 // Module Components (stubs or small versions for now)
 import CommunityChatModule from './modules/ChatModule';
 import CommunityFinanceModule from './modules/FinanceModule';
-import CommunityTaskModule from './modules/TaskModule';
+import CommunityProjectsModule from './modules/ProjectsModule';
 import CommunityCalendarModule from './modules/CalendarModule';
 import MemberRegistry from './modules/MemberRegistry';
 import CommunitySecretaryModule from './modules/SecretaryModule';
 import ReportsModule from './modules/ReportsModule';
+import AssetsModule from './modules/AssetsModule';
+import DisputeModule from './modules/DisputeModule';
+import RecordsModule from './modules/RecordsModule';
 
 export default function CommunityDetail({ 
   user, 
@@ -46,80 +58,71 @@ export default function CommunityDetail({
   const [activeModule, setActiveModule] = useState<string>('chat');
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
 
   useEffect(() => {
-    const unsub = onSnapshot(doc(db, 'communities', communityId), (doc) => {
-      if (doc.exists()) {
-        const data = doc.data();
-        setCommunity({ id: doc.id, ...data });
-        // Set default module if not set, ensuring it exists in community modules
-        if (!activeModule && data.modules?.length > 0) {
-           setActiveModule(data.modules[0]);
-        }
+    if (!communityId) return;
+    setLoading(true);
+    const unsub = onSnapshot(doc(db, 'communities', communityId), (snapshot) => {
+      if (snapshot.exists()) {
+        setCommunity({ id: snapshot.id, ...snapshot.data() });
+      } else {
+        toast.error("Community not found.");
+        onBack();
       }
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching community:", error);
+      toast.error("Failed to load community details.");
       setLoading(false);
     });
     return () => unsub();
-  }, [communityId, activeModule]);
+  }, [communityId]);
 
-  if (loading) return <div className="p-20 text-center font-black uppercase text-[10px] tracking-widest text-gray-400">Loading Group...</div>;
-  if (!community) return <div className="p-20 text-center">Group not found.</div>;
-
-  const isModerator = community.moderatorIds?.includes(user.uid) || community.creatorId === user.uid;
-  const isMember = community.memberIds?.includes(user.uid) || isModerator;
-
-  const handleJoin = async () => {
-    try {
-      await updateDoc(doc(db, 'communities', communityId), {
-        memberIds: arrayUnion(user.uid)
-      });
-      toast.success("Joined group successfully!");
-    } catch (e) {
-      toast.error("Failed to join group.");
-    }
-  };
-
-  if (!isMember) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-[#fcfcfc] dark:bg-zinc-950 pb-24 flex items-center justify-center p-6">
-         <div className="bg-white dark:bg-zinc-900 border border-black/5 dark:border-white/5 p-12 rounded-[3.5rem] max-w-lg text-center shadow-xl space-y-6">
-            <Layout className="w-16 h-16 text-black/10 dark:text-white/10 mx-auto" />
-            <h2 className="text-3xl font-black italic serif text-black dark:text-white">{community.name}</h2>
-            <p className="text-gray-500 dark:text-gray-400 font-medium leading-relaxed">{community.description}</p>
-            
-            <button 
-              onClick={handleJoin}
-              className="w-full py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl"
-            >
-               Join Group
-            </button>
-            <button 
-              onClick={onBack}
-              className="text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-black dark:hover:text-white pt-4 transition-colors"
-             >
-               Return to Groups
-            </button>
-         </div>
+      <div className="min-h-screen bg-[#fcfcfc] dark:bg-zinc-950 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+           <div className="w-12 h-12 border-4 border-black dark:border-white border-t-transparent animate-spin rounded-full" />
+           <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Loading Community Data</p>
+        </div>
       </div>
     );
   }
 
+  if (!community) return null;
+
+  const isModerator = community?.ownerId === user.uid || community?.moderatorIds?.includes(user.uid);
+
+  // Group modules into visible and hidden
   const allModules = [
-    { id: 'chat', label: 'Group Chat', icon: MessageCircle, color: 'text-blue-500' },
-    { id: 'wallet', label: 'Finance & Banking', icon: Wallet, color: 'text-green-500' },
-    { id: 'tasks', label: 'Projects', icon: CheckSquare, color: 'text-orange-500' },
-    { id: 'calendar', label: 'Events', icon: Calendar, color: 'text-purple-500' },
-    { id: 'secretary', label: 'News & Updates', icon: Shield, color: 'text-indigo-500' },
-    { id: 'reports', label: 'Reports', icon: BarChart3, color: 'text-orange-500' },
-    { id: 'members', label: 'Members', icon: Users, color: 'text-pink-500' }
+    { id: 'chat', label: 'Group Chat', icon: MessageCircle, color: 'text-blue-500', priority: 100 },
+    { id: 'wallet', label: 'Finance', icon: Wallet, color: 'text-green-500', priority: 90 },
+    { id: 'tasks', label: 'Impact Projects', icon: Briefcase, color: 'text-orange-500', priority: 80 },
+    { id: 'calendar', label: 'Events', icon: Calendar, color: 'text-purple-500', priority: 70 },
+    { id: 'secretary', label: 'Updates', icon: Shield, color: 'text-indigo-500', priority: 60 },
+    { id: 'assets', label: 'Inventory', icon: Package, color: 'text-orange-500', priority: 50 },
+    { id: 'records', label: 'Records', icon: BookOpen, color: 'text-blue-600', priority: 40 },
+    { id: 'disputes', label: 'Resolutions', icon: Gavel, color: 'text-red-500', priority: 30 },
+    { id: 'reports', label: 'Reports', icon: BarChart3, color: 'text-orange-500', priority: 20 },
+    { id: 'members', label: 'Members', icon: Users, color: 'text-pink-500', priority: 10 }
   ];
 
-  const modules = allModules.filter(m => 
-    community.modules?.includes(m.id) || 
+  const enabledModules = allModules.filter(m => 
+    community?.modules?.includes(m.id) || 
     m.id === 'chat' || 
     m.id === 'members' ||
     (isModerator && (m.id === 'reports' || m.id === 'wallet'))
-  );
+  ).sort((a, b) => b.priority - a.priority);
+
+  // Split into top 4 and overflow
+  const visibleModules = enabledModules.slice(0, 4);
+  const hiddenModules = enabledModules.slice(4);
+
+  // If active module is in hidden, we should swap or highlight?
+  // Let's just make sure active is accessible.
+  const isActiveHidden = hiddenModules.some(m => m.id === activeModule);
+  const activeHiddenMod = hiddenModules.find(m => m.id === activeModule);
 
   const toggleModule = async (moduleId: string) => {
     if (!isModerator) return;
@@ -138,55 +141,47 @@ export default function CommunityDetail({
     }
   };
 
-  const handleImageSelect = (
+  const handleUrlSubmit = async (type: 'banner' | 'logo') => {
+    const url = window.prompt(`Enter URL for the ${type}:`);
+    if (!url) return;
+
+    try {
+      await updateDoc(doc(db, 'communities', communityId), {
+         [type === 'banner' ? 'bannerUrl' : 'logoUrl']: url
+      });
+      toast.success(`${type === 'banner' ? 'Cover image' : 'Logo'} updated successfully`);
+    } catch (err) {
+      toast.error("Failed to update image");
+    }
+  };
+
+  const handleImageSelect = async (
     e: React.ChangeEvent<HTMLInputElement>,
     type: 'banner' | 'logo'
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const img = new Image();
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    
-    img.onload = async () => {
-      // Calculate dimensions maintaining aspect ratio
-      const MAX_WIDTH = type === 'banner' ? 1200 : 400;
-      const MAX_HEIGHT = type === 'banner' ? 600 : 400;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be less than 5MB');
+      return;
+    }
+
+    const toastId = toast.loading(`Uploading ${type}...`);
+    try {
+      const extension = file.name.split('.').pop();
+      const storageRef = ref(storage, `communities/${communityId}/${type}-${Date.now()}.${extension}`);
+      await uploadBytes(storageRef, file);
+      const downloadUrl = await getDownloadURL(storageRef);
       
-      let width = img.width;
-      let height = img.height;
-      
-      if (width > height) {
-        if (width > MAX_WIDTH) {
-          height *= MAX_WIDTH / width;
-          width = MAX_WIDTH;
-        }
-      } else {
-        if (height > MAX_HEIGHT) {
-          width *= MAX_HEIGHT / height;
-          height = MAX_HEIGHT;
-        }
-      }
-      
-      canvas.width = width;
-      canvas.height = height;
-      ctx?.drawImage(img, 0, 0, width, height);
-      
-      // Compress to JPEG to save space
-      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
-      
-      try {
-        await updateDoc(doc(db, 'communities', communityId), {
-           [type === 'banner' ? 'bannerUrl' : 'logoUrl']: compressedBase64
-        });
-        toast.success(`${type === 'banner' ? 'Cover image' : 'Logo'} updated successfully`);
-      } catch (err) {
-        toast.error("Failed to update image");
-      }
-    };
-    
-    img.src = URL.createObjectURL(file);
+      await updateDoc(doc(db, 'communities', communityId), {
+         [type === 'banner' ? 'bannerUrl' : 'logoUrl']: downloadUrl
+      });
+      toast.success(`${type === 'banner' ? 'Cover image' : 'Logo'} updated successfully`, { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to upload image", { id: toastId });
+    }
   };
 
   return (
@@ -204,10 +199,18 @@ export default function CommunityDetail({
             <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
             
             {isModerator && (
-               <label className="absolute top-6 right-6 md:right-12 bg-white/20 hover:bg-white/40 backdrop-blur-md p-3.5 rounded-full text-white transition-colors opacity-0 group-hover:opacity-100 cursor-pointer">
-                  <Upload className="w-5 h-5" />
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageSelect(e, 'banner')} />
-               </label>
+               <div className="absolute top-6 right-6 md:right-12 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                 <button 
+                   onClick={() => handleUrlSubmit('banner')}
+                   className="bg-white/20 hover:bg-white/40 backdrop-blur-md p-3.5 rounded-full text-white transition-colors"
+                 >
+                    <Link className="w-5 h-5" />
+                 </button>
+                 <label className="bg-white/20 hover:bg-white/40 backdrop-blur-md p-3.5 rounded-full text-white transition-colors cursor-pointer">
+                    <Upload className="w-5 h-5" />
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageSelect(e, 'banner')} />
+                 </label>
+               </div>
             )}
 
             {/* Overlaid text */}
@@ -221,10 +224,18 @@ export default function CommunityDetail({
                          <Users className="w-12 h-12 text-gray-300 dark:text-gray-700" />
                      )}
                      {isModerator && (
-                        <label className="absolute inset-0 bg-black/50 opacity-0 group-hover/logo:opacity-100 flex items-center justify-center text-white transition-opacity rounded-[1.75rem] cursor-pointer">
-                           <Upload className="w-6 h-6" />
-                           <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageSelect(e, 'logo')} />
-                        </label>
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/logo:opacity-100 flex items-center justify-center gap-4 text-white transition-opacity rounded-[1.75rem]">
+                           <button 
+                              onClick={() => handleUrlSubmit('logo')}
+                              className="hover:scale-110 transition-transform p-2 bg-white/20 rounded-full"
+                           >
+                              <Link className="w-5 h-5" />
+                           </button>
+                           <label className="hover:scale-110 transition-transform p-2 bg-white/20 rounded-full cursor-pointer">
+                              <Upload className="w-5 h-5" />
+                              <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageSelect(e, 'logo')} />
+                           </label>
+                        </div>
                      )}
                   </div>
                   <div className="text-white text-center md:text-left flex-1 md:flex-none">
@@ -253,24 +264,80 @@ export default function CommunityDetail({
       <div className="border-b border-black/5 dark:border-white/5 bg-white dark:bg-zinc-900 sticky top-0 z-30 shadow-sm">
          <div className="max-w-7xl mx-auto px-4 md:px-12 flex items-center justify-between gap-4">
             {/* Scrollable Nav wrapper */}
-            <div className="flex-1 overflow-hidden relative">
-               <div className="flex items-center gap-2 overflow-x-auto overflow-y-hidden pt-4 pb-0 snap-x relative h-[4.5rem] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                  {modules.map(m => (
+            <div className="flex-1">
+               <div className="flex items-center gap-1 h-[4.5rem]">
+                  {visibleModules.map(m => (
                      <button
                         key={m.id}
                         onClick={() => setActiveModule(m.id)}
                         className={cn(
-                          "px-5 h-12 rounded-t-2xl flex items-center gap-2.5 text-sm font-bold transition-all whitespace-nowrap snap-start shrink-0 relative mt-2",
-                          activeModule === m.id ? "text-black dark:text-white bg-gray-50 dark:bg-zinc-800" : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800"
+                          "px-4 h-12 rounded-2xl flex items-center gap-2.5 text-xs font-bold transition-all whitespace-nowrap shrink-0 relative",
+                          activeModule === m.id ? "text-black dark:text-white bg-gray-50 dark:bg-zinc-800 shadow-sm" : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800"
                         )}
                      >
                        <m.icon className={cn("w-4 h-4", activeModule === m.id ? m.color : "")} />
-                       {m.label}
+                       <span className="hidden sm:inline">{m.label}</span>
                        {activeModule === m.id && (
-                          <motion.div layoutId="activeModTab" className="absolute bottom-0 left-0 right-0 h-1 bg-black dark:bg-white" />
+                          <motion.div layoutId="activeModTab" className="absolute bottom-0 left-4 right-4 h-0.5 bg-black dark:bg-white" />
                        )}
                      </button>
                   ))}
+
+                  {hiddenModules.length > 0 && (
+                    <div className="relative">
+                       <button
+                          onClick={() => setShowMoreMenu(!showMoreMenu)}
+                          className={cn(
+                            "px-4 h-12 rounded-2xl flex items-center gap-2.5 text-xs font-bold transition-all whitespace-nowrap shrink-0",
+                            isActiveHidden ? "text-black dark:text-white bg-gray-50 dark:bg-zinc-800 shadow-sm" : "text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-zinc-800"
+                          )}
+                       >
+                          {isActiveHidden && activeHiddenMod ? (
+                            <>
+                               <activeHiddenMod.icon className={cn("w-4 h-4", activeHiddenMod.color)} />
+                               <span className="hidden sm:inline">{activeHiddenMod.label}</span>
+                            </>
+                          ) : (
+                            <>
+                               <MoreHorizontal className="w-4 h-4" />
+                               <span className="hidden sm:inline">More</span>
+                            </>
+                          )}
+                          <ChevronDown className={cn("w-3 h-3 transition-transform", showMoreMenu ? "rotate-180" : "")} />
+                       </button>
+
+                       <AnimatePresence>
+                          {showMoreMenu && (
+                            <>
+                               <div className="fixed inset-0 z-40" onClick={() => setShowMoreMenu(false)} />
+                               <motion.div
+                                 initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                 animate={{ opacity: 1, y: 0, scale: 1 }}
+                                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                 className="absolute top-full right-0 mt-2 w-56 bg-white dark:bg-zinc-900 rounded-3xl border border-black/5 dark:border-white/5 shadow-2xl p-2 z-50 overflow-hidden"
+                               >
+                                  {hiddenModules.map(m => (
+                                     <button
+                                        key={m.id}
+                                        onClick={() => {
+                                          setActiveModule(m.id);
+                                          setShowMoreMenu(false);
+                                        }}
+                                        className={cn(
+                                          "w-full px-4 py-3 rounded-2xl flex items-center gap-3 text-xs font-bold transition-all text-left",
+                                          activeModule === m.id ? "bg-black text-white dark:bg-white dark:text-black" : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800"
+                                        )}
+                                     >
+                                        <m.icon className={cn("w-4 h-4", activeModule === m.id ? "" : m.color)} />
+                                        {m.label}
+                                     </button>
+                                  ))}
+                               </motion.div>
+                            </>
+                          )}
+                       </AnimatePresence>
+                    </div>
+                  )}
                </div>
             </div>
          
@@ -298,9 +365,12 @@ export default function CommunityDetail({
             >
                {activeModule === 'chat' && <CommunityChatModule community={community} user={user} />}
                {activeModule === 'wallet' && <CommunityFinanceModule community={community} user={user} />}
-               {activeModule === 'tasks' && <CommunityTaskModule community={community} user={user} />}
+               {activeModule === 'tasks' && <CommunityProjectsModule community={community} user={user} />}
                {activeModule === 'calendar' && <CommunityCalendarModule community={community} user={user} />}
                {activeModule === 'secretary' && <CommunitySecretaryModule community={community} user={user} />}
+               {activeModule === 'assets' && <AssetsModule community={community} user={user} />}
+               {activeModule === 'records' && <RecordsModule community={community} user={user} />}
+               {activeModule === 'disputes' && <DisputeModule community={community} user={user} />}
                {activeModule === 'reports' && <ReportsModule community={community} user={user} />}
                {activeModule === 'members' && <MemberRegistry community={community} user={user} />}
             </motion.div>

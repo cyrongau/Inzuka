@@ -26,8 +26,9 @@ import {
   Loader2,
   X
 } from 'lucide-react';
-import { db, handleFirestoreError, OperationType } from '../../lib/firebase';
+import { db, storage, handleFirestoreError, OperationType } from '../../lib/firebase';
 import { extractIdentityData } from '../../services/geminiService';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { 
   doc, 
   updateDoc, 
@@ -91,6 +92,23 @@ const handleImageUpload = (file: File, callback: (v: string) => void) => {
   const reader = new FileReader();
   reader.onloadend = () => callback(reader.result as string);
   reader.readAsDataURL(file);
+};
+
+const handleStorageUpload = async (file: File, path: string, callback: (v: string) => void) => {
+  if (file.size > 5 * 1024 * 1024) {
+    alert('Image must be less than 5MB');
+    return;
+  }
+  try {
+    const extension = file.name.split('.').pop() || 'jpg';
+    const storageRef = ref(storage, `${path}-${Date.now()}.${extension}`);
+    await uploadBytes(storageRef, file);
+    const downloadUrl = await getDownloadURL(storageRef);
+    callback(downloadUrl);
+  } catch (err) {
+    console.error(err);
+    alert('Failed to upload image');
+  }
 };
 
 export default function Profile({ user, profile: initialProfile, onTabChange }: { user: AuthUser, profile: UserProfile, onTabChange?: (tab: string) => void }) {
@@ -346,7 +364,7 @@ export default function Profile({ user, profile: initialProfile, onTabChange }: 
         <div 
           className="h-64 w-full bg-gradient-to-br from-gray-900 via-gray-800 to-black rounded-[3rem] shadow-2xl overflow-hidden relative group"
           style={{
-            backgroundImage: profile?.bannerURL ? `url(${profile.bannerURL})` : undefined,
+            backgroundImage: profile?.bannerURL ? `url(${profile.bannerURL})` : `url('https://images.unsplash.com/photo-1673526759319-57811d44b600')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center'
           }}
@@ -383,20 +401,41 @@ export default function Profile({ user, profile: initialProfile, onTabChange }: 
                 exit={{ opacity: 0, scale: 0.95 }}
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-10 z-20"
               >
-                  <div className="bg-white dark:bg-zinc-900 rounded-[2rem] p-8 w-full max-w-md space-y-5 shadow-2xl border border-black/5 dark:border-white/5">
+                  <div className="bg-white dark:bg-zinc-900 rounded-[2rem] p-8 w-full max-w-md space-y-4 shadow-2xl border border-black/5 dark:border-white/5">
                   <h4 className="font-bold text-xl flex items-center gap-2 italic serif text-black dark:text-white">
                     <ImageIcon className="w-5 h-5 text-orange-500" /> 
                     Customize Banner
                   </h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 font-light">Enter a high-quality image URL (e.g. from Unsplash or Pinterest) to personalize your family home.</p>
-                  <input 
-                    type="url"
-                    placeholder="https://images.unsplash.com/..."
-                    value={tempBannerUrl}
-                    onChange={e => setTempBannerUrl(e.target.value)}
-                    className="w-full bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 text-black dark:text-white rounded-xl p-4 text-sm font-medium outline-none"
-                  />
-                  <div className="flex gap-3">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 font-light">Enter an image URL or upload an image to personalize your banner.</p>
+                  
+                  <div className="space-y-3">
+                    <input 
+                      type="url"
+                      placeholder="https://images.unsplash.com/..."
+                      value={tempBannerUrl}
+                      onChange={e => setTempBannerUrl(e.target.value)}
+                      className="w-full bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 text-black dark:text-white rounded-xl p-3 text-sm font-medium outline-none"
+                    />
+                    
+                    <div className="flex items-center gap-2">
+                      <div className="h-px bg-black/5 dark:bg-white/5 flex-1" />
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">OR</span>
+                      <div className="h-px bg-black/5 dark:bg-white/5 flex-1" />
+                    </div>
+
+                    <input 
+                      type="file"
+                      accept="image/*"
+                      onChange={e => {
+                        if (e.target.files && e.target.files[0]) {
+                          handleStorageUpload(e.target.files[0], `users/${user.uid}/banner`, setTempBannerUrl);
+                        }
+                      }}
+                      className="w-full text-xs text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-orange-50 file:text-orange-600 hover:file:bg-orange-100"
+                    />
+                  </div>
+                  
+                  <div className="flex gap-3 pt-2">
                     <button onClick={handleUpdateBanner} className="flex-1 bg-black dark:bg-white text-white dark:text-black py-4 rounded-xl font-bold text-sm shadow-xl hover:scale-[1.02] transition-transform">Apply</button>
                     <button onClick={() => setShowBannerInput(false)} className="flex-1 bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 py-4 rounded-xl font-bold text-sm">Cancel</button>
                   </div>
@@ -415,7 +454,7 @@ export default function Profile({ user, profile: initialProfile, onTabChange }: 
               accept="image/*"
               onChange={e => {
                 if (e.target.files && e.target.files[0]) {
-                  handleImageUpload(e.target.files[0], (dataUrl) => {
+                  handleStorageUpload(e.target.files[0], `users/${user.uid}/profile`, (dataUrl) => {
                     updateDoc(doc(db, 'users', user.uid), { photoURL: dataUrl });
                   });
                 }
@@ -796,7 +835,7 @@ export default function Profile({ user, profile: initialProfile, onTabChange }: 
                                  className="hidden" 
                                  onChange={e => {
                                     if (e.target.files && e.target.files[0]) {
-                                       handleImageUpload(e.target.files[0], async (dataUrl) => {
+                                       handleStorageUpload(e.target.files[0], `families/${family?.id}/profile`, async (dataUrl) => {
                                           if (family) {
                                              await updateDoc(doc(db, 'families', family.id), { photoURL: dataUrl });
                                           }
@@ -860,10 +899,10 @@ export default function Profile({ user, profile: initialProfile, onTabChange }: 
                         accept="image/*"
                         onChange={e => {
                           if (e.target.files && e.target.files[0]) {
-                            handleImageUpload(e.target.files[0], setTempFamilyBannerUrl);
+                            handleStorageUpload(e.target.files[0], `families/${family?.id}/banner`, setTempFamilyBannerUrl);
                           }
                         }}
-                        className="text-xs max-w-[200px] text-gray-500 dark:text-gray-400"
+                        className="text-xs max-w-[200px] text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-orange-50 file:text-orange-600 hover:file:bg-orange-100"
                      />
                      <button onClick={handleUpdateFamilyBanner} className="bg-orange-600 text-white px-6 py-3 rounded-xl text-sm font-bold shadow-md hover:bg-orange-700 transition-colors whitespace-nowrap w-full md:w-auto mt-2 md:mt-0">
                        Save Background
@@ -1015,7 +1054,6 @@ export default function Profile({ user, profile: initialProfile, onTabChange }: 
                                        <button 
                                           onClick={async (e) => {
                                              e.stopPropagation();
-                                             if (!window.confirm(`Are you sure you want to remove ${member.displayName} from the family?`)) return;
                                              try {
                                                await updateDoc(doc(db, 'users', member.uid), { 
                                                   familyId: null, 

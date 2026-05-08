@@ -2,8 +2,10 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { db } from "../lib/firebase";
 import { collection, addDoc, serverTimestamp, getDoc, doc } from "firebase/firestore";
 
-const apiKey = process.env.GEMINI_API_KEY;
-if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
+import { getGeminiApiKey } from "../lib/env";
+
+const apiKey = getGeminiApiKey();
+if (!apiKey) {
   console.warn("GEMINI_API_KEY is not configured or is using the placeholder value.");
 }
 

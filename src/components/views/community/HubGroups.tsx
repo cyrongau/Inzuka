@@ -12,16 +12,18 @@ import {
   Tag
 } from 'lucide-react';
 import { db } from '../../../lib/firebase';
-import { collection, query, onSnapshot, where, limit } from 'firebase/firestore';
+import { collection, query, onSnapshot, where, limit, getDocs } from 'firebase/firestore';
 import { cn } from '../../../lib/utils';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import CreateCommunityWizard from './CreateCommunityWizard';
+import SmartSearch from '../../ui/SmartSearch';
 
 export default function HubGroups({ user, profile, onSelect }: { user: User, profile: any, onSelect: (id: string) => void }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [communities, setCommunities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
+  const [currentStatIndex, setCurrentStatIndex] = useState(0);
 
   useEffect(() => {
     // Show all public communities or communities user is in
@@ -33,10 +35,30 @@ export default function HubGroups({ user, profile, onSelect }: { user: User, pro
     return () => unsub();
   }, []);
 
+  useEffect(() => {
+    // Cycle stats if there are multiple communities
+    if (communities.length > 1) {
+       const interval = setInterval(() => {
+         setCurrentStatIndex(prev => (prev + 1) % communities.length);
+       }, 5000);
+       return () => clearInterval(interval);
+    }
+  }, [communities]);
+
   const filtered = communities.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.type.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const searchData = communities.map(c => ({
+     id: c.id,
+     name: c.name,
+     subtitle: c.type,
+     icon: <Globe className="w-5 h-5" />,
+     imageUrl: c.logoUrl
+  }));
+
+  const activeStatCommunity = communities[currentStatIndex];
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
@@ -46,26 +68,41 @@ export default function HubGroups({ user, profile, onSelect }: { user: User, pro
             <h1 className="text-4xl font-black italic serif tracking-tight text-black dark:text-white">Groups</h1>
             <p className="text-gray-400 dark:text-gray-500 font-medium max-w-xl">Discover and join local groups, clubs, and communities.</p>
             
-            <div className="flex items-center gap-4 bg-white dark:bg-zinc-900 p-2 rounded-2xl shadow-sm border border-black/5 dark:border-white/5 max-w-md">
-               <div className="pl-4 text-gray-400 dark:text-gray-500">
-                  <Search className="w-5 h-5" />
-               </div>
-               <input 
-                  type="text" 
-                  placeholder="Search groups..." 
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full py-3 bg-transparent font-medium focus:outline-none text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600"
+            <div className="max-w-md">
+               <SmartSearch 
+                 data={searchData} 
+                 onSelect={({ id }) => onSelect(id)} 
+                 placeholder="Search groups..." 
                />
             </div>
          </div>
 
-         <div className="bg-black dark:bg-zinc-900 text-white p-8 rounded-[2.5rem] relative overflow-hidden flex flex-col justify-between shadow-sm border border-transparent dark:border-white/5">
-            <div className="relative z-10 space-y-2">
-               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 dark:text-gray-500">New Members</p>
-               <h3 className="text-3xl font-black italic serif underline decoration-orange-500 underline-offset-8">+2.4k</h3>
-               <p className="text-xs text-white/60 dark:text-gray-400">People joined a group this week.</p>
-            </div>
+         <div className="bg-black dark:bg-zinc-900 text-white p-8 rounded-[2.5rem] relative overflow-hidden flex flex-col justify-between shadow-sm border border-transparent dark:border-white/5 h-64">
+            <AnimatePresence mode="wait">
+               {activeStatCommunity ? (
+                  <motion.div 
+                     key={activeStatCommunity.id}
+                     initial={{ opacity: 0, y: 10 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     exit={{ opacity: 0, y: -10 }}
+                     className="relative z-10 space-y-2"
+                  >
+                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 dark:text-gray-500">New Members</p>
+                     <h3 className="text-3xl font-black italic serif underline decoration-orange-500 underline-offset-8">
+                        {activeStatCommunity.memberIds?.length || 0}
+                     </h3>
+                     <p className="text-xs text-white/60 dark:text-gray-400 mt-2 truncate">
+                        in <span className="font-bold">{activeStatCommunity.name}</span>
+                     </p>
+                  </motion.div>
+               ) : (
+                  <div className="relative z-10 space-y-2">
+                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 dark:text-gray-500">New Members</p>
+                     <h3 className="text-3xl font-black italic serif underline decoration-orange-500 underline-offset-8">0</h3>
+                     <p className="text-xs text-white/60 dark:text-gray-400">Loading stats...</p>
+                  </div>
+               )}
+            </AnimatePresence>
             <TrendingUp className="absolute -right-4 -bottom-4 w-32 h-32 text-white/5 dark:text-white/5" />
          </div>
       </div>
@@ -83,9 +120,15 @@ export default function HubGroups({ user, profile, onSelect }: { user: User, pro
             >
                <div className="space-y-6">
                   <div className="flex items-start justify-between">
-                     <div className="w-16 h-16 bg-gray-50 dark:bg-zinc-800 rounded-2xl flex items-center justify-center text-gray-400 dark:text-gray-500 group-hover:bg-black dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-black transition-all shadow-sm">
-                        <Globe className="w-8 h-8" />
-                     </div>
+                     {community.logoUrl ? (
+                         <div className="w-16 h-16 rounded-2xl overflow-hidden border border-black/5 dark:border-white/5">
+                            <img src={community.logoUrl} alt={community.name} className="w-full h-full object-cover" />
+                         </div>
+                     ) : (
+                         <div className="w-16 h-16 bg-gray-50 dark:bg-zinc-800 rounded-2xl flex items-center justify-center text-gray-400 dark:text-gray-500 group-hover:bg-black dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-black transition-all shadow-sm">
+                            <Globe className="w-8 h-8" />
+                         </div>
+                     )}
                      <div className="px-3 py-1 bg-gray-100 dark:bg-zinc-800 rounded-full text-[8px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 border border-black/5 dark:border-white/5">
                         {community.type}
                      </div>
@@ -101,14 +144,16 @@ export default function HubGroups({ user, profile, onSelect }: { user: User, pro
 
                <div className="pt-8 border-t border-black/[0.03] dark:border-white/[0.05] mt-8 flex items-center justify-between">
                   <div className="flex -space-x-2">
-                     {[...Array(3)].map((_, i) => (
+                     {[...Array(Math.min(3, community.memberIds?.length || 0))].map((_, i) => (
                         <div key={i} className="w-8 h-8 rounded-full border-2 border-white dark:border-zinc-900 bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-black dark:text-white">
                            {String.fromCharCode(65 + i)}
                         </div>
                      ))}
-                     <div className="w-8 h-8 rounded-full border-2 border-white dark:border-zinc-900 bg-black dark:bg-zinc-700 text-white flex items-center justify-center text-[8px] font-black">
-                        +{community.memberIds?.length || 0}
-                     </div>
+                     {(community.memberIds?.length > 3 || !community.memberIds) && (
+                        <div className="w-8 h-8 rounded-full border-2 border-white dark:border-zinc-900 bg-black dark:bg-zinc-700 text-white flex items-center justify-center text-[8px] font-black">
+                           +{(community.memberIds?.length || 0) > 3 ? (community.memberIds.length - 3) : 0}
+                        </div>
+                     )}
                   </div>
                   <div className="flex items-center gap-2 text-black dark:text-white font-black uppercase text-[10px] tracking-widest group-hover:gap-4 transition-all">
                      {(community.memberIds?.includes(user.uid) || community.moderatorIds?.includes(user.uid)) ? "Open Group" : "Join Group"} <ArrowRight className="w-4 h-4" />

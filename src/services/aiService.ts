@@ -1,6 +1,11 @@
 import { GoogleGenAI, Type } from "@google/genai";
+import { getGeminiApiKey } from "../lib/env";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
+let _ai: GoogleGenAI | null = null;
+function getAI() {
+  if (!_ai) _ai = new GoogleGenAI({ apiKey: getGeminiApiKey() || 'UNSET' });
+  return _ai;
+}
 
 export interface TransactionExtraction {
   name: string;
@@ -13,8 +18,9 @@ export interface TransactionExtraction {
 
 export async function extractTransactionFromText(text: string): Promise<TransactionExtraction | null> {
   try {
+    const ai = getAI();
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "gemini-3-flash-preview",
       contents: `Extract transaction details (sender name, date, amount as number, reference number, currency, and category like "Savings", "Loan Repayment", "Contribution", "Business") from this SMS or text message. If details are missing, provide best guesses or null. Return JSON only.\n\nMessage:\n${text}`,
       config: {
         responseMimeType: "application/json",
@@ -43,8 +49,9 @@ export async function extractTransactionFromText(text: string): Promise<Transact
 
 export async function extractTransactionFromImage(base64Image: string, mimeType: string): Promise<TransactionExtraction | null> {
   try {
+    const ai = getAI();
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "gemini-3-flash-preview",
       contents: [
         {
           inlineData: {

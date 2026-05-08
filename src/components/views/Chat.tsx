@@ -27,7 +27,9 @@ import {
   onSnapshot, 
   serverTimestamp, 
   limit,
-  doc
+  doc,
+  setDoc,
+  updateDoc
 } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
@@ -46,7 +48,7 @@ interface Message {
   createdAt: any;
 }
 
-export default function Chat({ user, profile }: { user: AuthUser, profile: any }) {
+export default function Chat({ user, profile, notifications = [] }: { user: AuthUser, profile: any, notifications?: any[] }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [familyMembers, setFamilyMembers] = useState<Record<string, any>>({});
   const [familyData, setFamilyData] = useState<any>(null);
@@ -59,6 +61,8 @@ export default function Chat({ user, profile }: { user: AuthUser, profile: any }
   const [callTarget, setCallTarget] = useState('');
   const [isGroupCall, setIsGroupCall] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [messageLimit, setMessageLimit] = useState(50);
+  const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
 
@@ -75,18 +79,57 @@ export default function Chat({ user, profile }: { user: AuthUser, profile: any }
   useEffect(() => {
     if (!profile?.familyId) return;
 
-    const q = query(
-      collection(db, 'messages'),
-      where('familyId', '==', profile.familyId),
-      orderBy('createdAt', 'desc'),
-      limit(50)
-    );
+    let unsubMsgs: () => void;
 
-    const unsub = onSnapshot(q, (snap) => {
-      const msgs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
-      setMessages(msgs.reverse());
-    }, (error) => {
-      handleFirestoreError(error, OperationType.GET, 'messages');
+    if (activeChannel === 'lounge') {
+       const q = query(
+         collection(db, 'messages'),
+         where('familyId', '==', profile.familyId),
+         orderBy('createdAt', 'desc'),
+         limit(messageLimit)
+       );
+       unsubMsgs = onSnapshot(q, (snap) => {
+         const msgs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
+         setMessages(msgs.reverse());
+       }, (error) => {
+         handleFirestoreError(error, OperationType.GET, 'messages');
+       });
+    } else {
+       // Private Chat
+       const participants = [user.uid, activeChannel].sort();
+       const q = query(
+         collection(db, 'private_messages'),
+         where('participants', '==', participants),
+         orderBy('createdAt', 'desc'),
+         limit(messageLimit)
+       );
+       unsubMsgs = onSnapshot(q, (snap) => {
+         const msgs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
+         setMessages(msgs.reverse());
+       }, (error) => {
+         handleFirestoreError(error, OperationType.GET, 'private_messages');
+       });
+    }
+
+    return () => unsubMsgs?.();
+  }, [profile?.familyId, activeChannel, user.uid, messageLimit]);
+
+  useEffect(() => {
+    if (!profile?.familyId) return;
+
+    // Listen to typing status
+    const unsubTyping = onSnapshot(doc(db, 'typing_status', activeChannel === 'lounge' ? profile.familyId : [user.uid, activeChannel].sort().join('_')), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const now = Date.now();
+        // Online users are those who typed within the last 5 seconds
+        const activeTypers = Object.entries(data)
+          .filter(([uid, timestamp]) => uid !== user.uid && now - (timestamp as number) < 5000)
+          .map(([uid]) => uid);
+        setTypingUsers(activeTypers);
+      } else {
+        setTypingUsers([]);
+      }
     });
 
     const uq = query(
@@ -110,8 +153,8 @@ export default function Chat({ user, profile }: { user: AuthUser, profile: any }
       handleFirestoreError(error, OperationType.GET, `families/${profile.familyId}`);
     });
 
-    return () => { unsub(); unsubUsers(); unsubFam(); };
-  }, [profile?.familyId]);
+    return () => { unsubUsers(); unsubFam(); unsubTyping(); };
+  }, [profile?.familyId, activeChannel]); // Add activeChannel to dependencies
 
   useEffect(() => {
     // Check for private chat target from Profile
@@ -123,41 +166,13 @@ export default function Chat({ user, profile }: { user: AuthUser, profile: any }
   }, []);
 
   useEffect(() => {
-    if (!profile?.familyId) return;
-
-    let unsubMsgs: () => void;
-
-    if (activeChannel === 'lounge') {
-       const q = query(
-         collection(db, 'messages'),
-         where('familyId', '==', profile.familyId),
-         orderBy('createdAt', 'desc'),
-         limit(50)
-       );
-       unsubMsgs = onSnapshot(q, (snap) => {
-         const msgs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
-         setMessages(msgs.reverse());
-       });
-    } else {
-       // Private Chat
-       const participants = [user.uid, activeChannel].sort();
-       const q = query(
-         collection(db, 'private_messages'),
-         where('participants', '==', participants),
-         orderBy('createdAt', 'desc'),
-         limit(50)
-       );
-       unsubMsgs = onSnapshot(q, (snap) => {
-         const msgs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
-         setMessages(msgs.reverse());
-       });
+    // scroll if at bottom or initial load? We check if we added messages or initial load
+    // To avoid scrolling when loading more, we'd normally check if user was at bottom
+    // We'll leave the auto-scroll for simplicity but maybe checking before scrolling is better.
+    // For now we'll keep the basic scroll logic, only relying on smooth
+    if (messages.length > 0 && messages.length <= 50) {
+       scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-
-    return () => unsubMsgs?.();
-  }, [profile?.familyId, activeChannel, user.uid]);
-
-  useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
     
     // Auto-generate smart reply when last message is from someone else
     if (messages.length > 0 && messages[messages.length - 1].senderId !== user.uid) {
@@ -204,12 +219,39 @@ export default function Chat({ user, profile }: { user: AuthUser, profile: any }
         text: textToSend,
         createdAt: serverTimestamp()
       });
+
+      // Send notifications to all family members
+      const notifyPromises = Object.keys(familyMembers)
+        .filter(uid => uid !== user.uid)
+        .map(uid => addDoc(collection(db, 'notifications'), {
+          userId: uid,
+          type: 'message',
+          title: 'New Family Message',
+          message: `${profile.displayName || 'A family member'} says: ${textToSend.substring(0, 30)}${textToSend.length > 30 ? '...' : ''}`,
+          senderId: user.uid,
+          channelId: 'lounge',
+          createdAt: serverTimestamp(),
+          isRead: false
+        }));
+      await Promise.all(notifyPromises);
     } else {
       await addDoc(collection(db, 'private_messages'), {
         participants: [user.uid, activeChannel].sort(),
         senderId: user.uid,
         text: textToSend,
         createdAt: serverTimestamp()
+      });
+
+      // Send notification to the partner
+      await addDoc(collection(db, 'notifications'), {
+        userId: activeChannel,
+        type: 'message',
+        title: 'New Private Message',
+        message: `${profile.displayName || 'A family member'} sent: ${textToSend.substring(0, 30)}${textToSend.length > 30 ? '...' : ''}`,
+        senderId: user.uid,
+        channelId: user.uid,
+        createdAt: serverTimestamp(),
+        isRead: false
       });
     }
   };
@@ -257,6 +299,38 @@ export default function Chat({ user, profile }: { user: AuthUser, profile: any }
 
   const activePartner = activeChannel !== 'lounge' ? (familyMembers[activeChannel] as any) : null;
 
+  const hasUnread = (channelId: string) => {
+    return notifications.some(n => !n.isRead && n.type === 'message' && n.channelId === channelId);
+  };
+
+  const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputText(e.target.value);
+    
+    // Throttle typing updates to Firestore
+    if (!profile?.familyId) return;
+    
+    const channelId = activeChannel === 'lounge' ? profile.familyId : [user.uid, activeChannel].sort().join('_');
+    const docRef = doc(db, 'typing_status', channelId);
+    setDoc(docRef, { [user.uid]: Date.now() }, { merge: true }).catch(() => {});
+  };
+
+  const handleChannelSwitch = async (channelId: string) => {
+    setActiveChannel(channelId);
+    
+    // Mark notifications as read for this channel
+    const unreadChannelNotifs = notifications.filter(n => !n.isRead && n.type === 'message' && n.channelId === channelId);
+    if (unreadChannelNotifs.length > 0) {
+      const promises = unreadChannelNotifs.map(n => 
+        updateDoc(doc(db, 'notifications', n.id), { isRead: true })
+      );
+      try {
+        await Promise.all(promises);
+      } catch (e) {
+        console.error("Failed to mark notifications as read", e);
+      }
+    }
+  };
+
   return (
     <div className="h-[calc(100vh-180px)] flex bg-white dark:bg-black rounded-[3rem] border border-black/5 dark:border-white/5 shadow-sm overflow-hidden">
       {/* Channels Sidebar */}
@@ -266,36 +340,48 @@ export default function Chat({ user, profile }: { user: AuthUser, profile: any }
          </div>
          <div className="flex-1 overflow-y-auto px-4 pb-8 space-y-2">
             <button 
-               onClick={() => setActiveChannel('lounge')}
+               onClick={() => handleChannelSwitch('lounge')}
                className={cn(
-                 "w-full flex items-center gap-3 p-4 rounded-2xl transition-all",
+                 "w-full flex items-center justify-between p-4 rounded-2xl transition-all",
                  activeChannel === 'lounge' ? "bg-black dark:bg-white text-white dark:text-black shadow-xl shadow-black/10 dark:shadow-white/10" : "hover:bg-white dark:hover:bg-zinc-800 text-gray-400 dark:text-gray-500 font-bold"
                )}
             >
-               <MessageCircle className="w-5 h-5" />
-               <span className="text-sm tracking-tight">Family Lounge</span>
+               <div className="flex items-center gap-3">
+                 <MessageCircle className="w-5 h-5" />
+                 <span className="text-sm tracking-tight">Family Lounge</span>
+               </div>
+               {hasUnread('lounge') && activeChannel !== 'lounge' && (
+                 <div className="w-2.5 h-2.5 bg-red-500 rounded-full shrink-0"></div>
+               )}
             </button>
 
             <div className="pt-6 pb-2 px-4">
               <span className="text-[10px] font-black uppercase tracking-widest text-gray-300 dark:text-gray-600">Direct Nodes</span>
             </div>
 
-            {(Object.values(familyMembers) as any[]).filter(m => m.uid !== user.uid).map(member => (
+            {(Object.values(familyMembers) as any[]).filter(m => m.uid !== user.uid).map(member => {
+              const isOnline = member.lastActive && (Date.now() - (typeof member.lastActive.toMillis === 'function' ? member.lastActive.toMillis() : new Date(member.lastActive).getTime())) < 5 * 60000;
+              return (
               <button 
                 key={member.uid}
-                onClick={() => setActiveChannel(member.uid)}
+                onClick={() => handleChannelSwitch(member.uid)}
                 className={cn(
-                  "w-full flex items-center gap-3 p-4 rounded-2xl transition-all",
+                  "w-full flex items-center justify-between p-4 rounded-2xl transition-all",
                   activeChannel === member.uid ? "bg-white dark:bg-zinc-800 text-black dark:text-white shadow-lg border border-black/5 dark:border-white/5" : "hover:bg-white dark:hover:bg-zinc-800 text-gray-400 dark:text-gray-500 font-bold"
                 )}
               >
-                <div className="w-8 h-8 rounded-xl overflow-hidden relative border border-black/5 dark:border-white/5">
-                   <img src={member.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.uid}`} className="w-full h-full object-cover" alt="S" referrerPolicy="no-referrer" />
-                   <div className="absolute bottom-0 right-0 w-2 h-2 bg-green-500 border-2 border-white rounded-full" />
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-xl overflow-hidden relative border border-black/5 dark:border-white/5 shrink-0">
+                     <img src={member.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.uid}`} className="w-full h-full object-cover" alt="S" referrerPolicy="no-referrer" />
+                     {isOnline && <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white dark:border-zinc-800 rounded-full" />}
+                  </div>
+                  <span className="text-sm tracking-tight truncate">{member.displayName}</span>
                 </div>
-                <span className="text-sm tracking-tight truncate">{member.displayName}</span>
+                {hasUnread(member.uid) && activeChannel !== member.uid && (
+                  <div className="w-2.5 h-2.5 bg-red-500 rounded-full shrink-0"></div>
+                )}
               </button>
-            ))}
+            )})}
          </div>
       </div>
 
@@ -334,7 +420,17 @@ export default function Chat({ user, profile }: { user: AuthUser, profile: any }
 
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto p-8 space-y-6 bg-gray-50/30 dark:bg-black">
-          <div className="text-center py-10">
+          {messages.length >= messageLimit && (
+            <div className="text-center pb-4">
+               <button 
+                 onClick={() => setMessageLimit(prev => prev + 50)}
+                 className="bg-white dark:bg-zinc-800 px-4 py-2 rounded-full text-xs font-bold text-gray-500 hover:text-black dark:hover:text-white transition-colors border border-black/5 dark:border-white/5 shadow-sm"
+               >
+                 Load Earlier Messages
+               </button>
+            </div>
+          )}
+          <div className="text-center py-4">
               <span className="bg-white dark:bg-zinc-900 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest text-gray-300 dark:text-gray-600 border border-black/[0.03] dark:border-white/[0.03]">Today</span>
           </div>
 
@@ -390,6 +486,24 @@ export default function Chat({ user, profile }: { user: AuthUser, profile: any }
               </motion.div>
             );
           })}
+          
+          {typingUsers.length > 0 && (
+            <div className="flex items-center gap-3 w-full py-2">
+              <div className="flex -space-x-2">
+                {typingUsers.map(uid => (
+                  <div key={uid} className="w-6 h-6 rounded-full overflow-hidden border-2 border-white dark:border-black shrink-0">
+                    <img src={familyMembers[uid]?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${uid}`} className="w-full h-full object-cover" alt="Typing" referrerPolicy="no-referrer" />
+                  </div>
+                ))}
+              </div>
+              <div className="bg-gray-100 dark:bg-zinc-800 rounded-2xl p-3 flex items-center gap-1 w-12 rounded-tl-none">
+                <span className="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" />
+                <span className="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }} />
+                <span className="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }} />
+              </div>
+            </div>
+          )}
+
           <div ref={scrollRef} />
         </div>
 
@@ -427,7 +541,7 @@ export default function Chat({ user, profile }: { user: AuthUser, profile: any }
               <input 
                 placeholder="Speak to your family..."
                 value={inputText}
-                onChange={e => setInputText(e.target.value)}
+                onChange={handleTyping}
                 className="w-full bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 rounded-[2rem] p-5 text-sm font-medium outline-none text-black dark:text-white focus:bg-white dark:focus:bg-zinc-900 focus:ring-1 focus:ring-black/10 dark:focus:ring-white/10 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />
               <div className="absolute right-4 top-1/2 -translate-y-1/2">

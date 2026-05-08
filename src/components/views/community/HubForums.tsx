@@ -24,6 +24,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
+import SmartSearch from '../../ui/SmartSearch';
 
 interface ForumThread {
   id: string;
@@ -94,6 +95,7 @@ export default function HubForums({ user, initialThreadId }: { user: User, initi
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [showCreate, setShowCreate] = useState(false);
   const [selectedThread, setSelectedThread] = useState<ForumThread | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Create Thread State
   const [newTitle, setNewTitle] = useState('');
@@ -515,15 +517,22 @@ export default function HubForums({ user, initialThreadId }: { user: User, initi
 
          {/* Threads Main Feed */}
          <div className="lg:col-span-3 space-y-8">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between relative z-40">
                <div className="flex items-center gap-6">
                   <button className="text-sm font-black italic serif underline underline-offset-8 decoration-2 text-black dark:text-white">Trending</button>
                   <button className="text-sm font-medium text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors">Newest</button>
                   <button className="text-sm font-medium text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors">Unanswered</button>
                </div>
-               <div className="flex items-center bg-white dark:bg-zinc-900 px-4 py-2 rounded-xl border border-black/5 dark:border-white/5 group-focus-within:border-black dark:group-focus-within:border-white transition-colors">
-                  <Search className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-                  <input type="text" placeholder="Search knowledge base..." className="bg-transparent border-none focus:outline-none text-xs ml-3 w-40 font-medium text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500" />
+               <div className="w-64">
+                  <SmartSearch 
+                    data={threads.map(t => ({ id: t.id, name: t.title, subtitle: t.category, icon: <MessageSquare className="w-4 h-4" /> }))}
+                    value={searchQuery}
+                    onChange={setSearchQuery}
+                    onSelect={(item) => setSelectedThread(threads.find(t => t.id === item.id) || null)}
+                    placeholder="Search knowledge base..."
+                    className="relative flex items-center bg-white dark:bg-zinc-900 pl-10 pr-4 py-2.5 rounded-xl border border-black/5 dark:border-white/5 focus-within:border-black dark:focus-within:border-white transition-all shadow-sm"
+                    inputClassName="w-full bg-transparent border-none focus:outline-none text-xs font-medium text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                  />
                </div>
             </div>
 

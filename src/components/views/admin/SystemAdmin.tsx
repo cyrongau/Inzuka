@@ -16,9 +16,11 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { db } from '../../../lib/firebase';
-import { collection, query, onSnapshot, updateDoc, doc, deleteDoc, orderBy, setDoc, serverTimestamp, addDoc, limit } from 'firebase/firestore';
+import { doc, deleteDoc, orderBy, setDoc, serverTimestamp, addDoc, limit } from 'firebase/firestore';
+import { collection, query, onSnapshot, updateDoc } from 'firebase/firestore';
 import { cn } from '../../../lib/utils';
 import { toast } from 'sonner';
+import SmartSearch from '../../ui/SmartSearch';
 
 export default function SystemAdminDashboard({ user }: { user: User }) {
   const [activeTab, setActiveTab] = useState<'hubs' | 'reports' | 'tickets' | 'chats'>('hubs');
@@ -107,14 +109,12 @@ export default function SystemAdminDashboard({ user }: { user: User }) {
 
   const handleStatusChange = async (id: string, currentStatus: string, newStatus: string) => {
     if (newStatus === 'deleted') {
-      if (window.confirm("CRITICAL WARNING: Are you sure you want to permanently delete this community? All records will be expunged.")) {
-        try {
-          await deleteDoc(doc(db, 'communities', id));
-          toast.success("Community permanently expunged.");
-        } catch (e) {
-           console.error(e);
-           toast.error("Failed to delete network.");
-        }
+      try {
+        await deleteDoc(doc(db, 'communities', id));
+        toast.success("Community permanently expunged.");
+      } catch (e) {
+         console.error(e);
+         toast.error("Failed to delete network.");
       }
       return;
     }
@@ -193,13 +193,14 @@ export default function SystemAdminDashboard({ user }: { user: User }) {
                    <Activity className="w-5 h-5 text-red-500" /> Network Audits
                 </h2>
                 <div className="relative w-full md:w-96">
-                   <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-                   <input 
-                     type="text" 
-                     placeholder="Search networks by ID or Name..."
+                   <SmartSearch 
+                     data={communities.map(c => ({ id: c.id, name: c.name, subtitle: c.type || 'Standard', icon: <Globe className="w-5 h-5" /> }))}
                      value={search}
-                     onChange={e => setSearch(e.target.value)}
-                     className="w-full bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 rounded-2xl pl-12 pr-4 py-3 outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 transition-all font-medium text-sm text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                     onChange={setSearch}
+                     onSelect={(item) => setSearch(item.name)}
+                     placeholder="Search networks by ID or Name..."
+                     className="w-full"
+                     inputClassName="w-full bg-gray-50 dark:bg-zinc-800 border border-black/5 dark:border-white/5 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 transition-all font-medium text-sm text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600"
                    />
                 </div>
              </div>
